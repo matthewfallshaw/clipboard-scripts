@@ -1,0 +1,26 @@
+h1. Clipboard Scripts
+
+A collection of scripts that operate on the OSX pasteboard.
+I trigger these from Quicksilver, but they'd work from Google Quick Search Box
+or any other launcher capable of launching shell scripts.
+
+h2. Install
+
+# Invoke Quicksilver
+# <code><Command><,></code> (for preferences)
+# Catalog
+# Click the '+' in the bottom left and add a File & Folder Scanner
+# Select the bin subdirectory of this directory
+# Click the small 'i' in the bottom right
+# "Include Contents:" Folder Contents (Depth: 2)
+# Command r (to rescan catalog)
+
+h2. License
+
+This work is licensed under a <a rel="license"
+href="http://creativecommons.org/licenses/by-sa/3.0/au/"
+>Creative Commons Attribution-Share Alike 3.0 Australia License</a>.
+
+h2. Tags
+
+OSX Hacks, clipboard, pasteboard, shortcuts.
