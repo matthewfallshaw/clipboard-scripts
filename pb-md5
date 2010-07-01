@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# MD5 hasherize the contents of the OSX clipboard
+require 'digest/md5'
+
+require File.join(File.dirname(__FILE__), "../lib/notify")
+
+output = Digest::MD5.hexdigest(IO.popen('pbpaste', 'r').read)
+IO.popen('pbcopy', 'w').print(output)
+notify(output)
