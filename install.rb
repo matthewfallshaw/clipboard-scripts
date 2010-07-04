@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
 # secrets in ~/.dotfiles_secrets like
-# gitconfig:
+# filename:
 #   "search_term": replace_term
 #   "other_search_term": other_replace_term
 
-IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin]
-
 %w[shellwords rubygems rake yaml].each {|l| require l }
+
+IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin]
 
 def replace_file(file)
   system %Q{rm -r "$PWD/bin/#{file}"} if File.exist?("$PWD/bin/#{file}")
@@ -81,7 +81,7 @@ else
     if File.exist?(file)
       replace(file)
     else
-      puts "What is this #{file} of which you speak?"
+      puts "What is this #{file} of which you speak? I see it not."
     end
   end
 end
