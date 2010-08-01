@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# ROT13 the contents of the OSX clipboard
+
+require File.join(File.dirname(__FILE__), "../lib/notify")
+
+class String
+  def rot13
+    self.tr('a-zA-Z','n-za-mN-ZA-M')
+  end
+end
+
+output = IO.popen('pbpaste', 'r').read.rot13
+IO.popen('pbcopy', 'w').print(output)
+notify(output)
