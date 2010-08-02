@@ -5,7 +5,7 @@
 #   "search_term": replace_term
 #   "other_search_term": other_replace_term
 
-%w[shellwords rubygems rake yaml].each {|l| require l }
+%w[shellwords rubygems rake yaml pathname].each {|l| require l }
 
 IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin]
 
@@ -15,8 +15,14 @@ def replace_file(file)
 end
  
 def copy_file(file)
-  puts "#{file}: copied"
-  system %Q{cp -r "$PWD/#{file}" "$PWD/bin/#{file}"}
+  f = Pathname.new("#{ENV["PWD"]}/#{file}")
+  if f.symlink?
+    puts "#{file} (really #{f.realpath}): copied"
+    system %Q{cp -r "#{f.realpath}" "$PWD/bin/#{file}"}
+  else
+    puts "#{file}: copied"
+    system %Q{cp -r "$PWD/#{file}" "$PWD/bin/#{file}"}
+  end
 end
 
 def copy_and_replace_secrets(file)
