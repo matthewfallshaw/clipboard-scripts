@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# Underscore the clipboard on OSX
+
+require File.join(File.dirname(__FILE__), "../lib/notify")
+
+output = IO.popen('pbpaste', 'r').read.gsub(/[\W_]/,"_").gsub(/-+/,"_").gsub(/^_+|_+$/,"")
+IO.popen('pbcopy', 'w').print(output)
+notify(output)
