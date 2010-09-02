@@ -11,4 +11,4 @@ end
 
 output = IO.popen('pbpaste', 'r').read.rot13
 IO.popen('pbcopy', 'w').print(output)
-notify(output)
+notify(output, true)
