@@ -10,7 +10,7 @@ require File.join(File.dirname(__FILE__), "../lib/notify")
 
 clipboard = IO.popen('pbpaste', 'r').read
 output = RedCloth.new(clipboard).to_html
-output.gsub!(%r|^(?:<p>)?(.*?)(?:</p>)?$|,'\1')  # remove wrapping paragraph
+# output.sub!(%r|^(?:<p>)?(.*?)(?:</p>)?$|m,'\1')  # remove wrapping paragraph
 
 IO.popen('pbcopy', 'w').print(output)
-notify(output)
+notify(output, true)
