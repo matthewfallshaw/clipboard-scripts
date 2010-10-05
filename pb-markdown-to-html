@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+# Convert the contents of the clipboard to html (with
+# BlueCloth[http://deveiate.org/projects/BlueCloth], so assuming it's Markdown)
+# and send it to STDOUT
+
+%w[rubygems bluecloth].each {|l| require l }
+
+require File.join(File.dirname(__FILE__), "../lib/notify")
+
+clipboard = IO.popen('pbpaste', 'r').read
+output = BlueCloth.new(clipboard).to_html
+
+IO.popen('pbcopy', 'w').print(output)
+notify(output, true)
