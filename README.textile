@@ -4,6 +4,10 @@ A collection of scripts that operate on the OSX pasteboard.
 I trigger these from Quicksilver, but they'd work from Google Quick Search Box
 or any other launcher capable of launching shell scripts.
 
+h2. ToDo
+
+* would (this):http://github.com/janlelis/clipboard make these tools cross-platform?
+
 h2. Install
 
 # Invoke Quicksilver
