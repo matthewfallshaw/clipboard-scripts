@@ -6,12 +6,41 @@ or any other launcher capable of launching shell scripts.
 
 h2. ToDo
 
-* would (this):http://github.com/janlelis/clipboard make these tools cross-platform?
+* would "this":http://github.com/janlelis/clipboard make these tools cross-platform?
+
+h2. Prerequisites
+
+@ruby@, @rubygems@
+(you could get those through "MacPorts":http://www.macports.org/install.php with @sudo port install rb-rubygems ruby@)
+
+h3. Prerequisites (… less geeky version)
+
+# [skippable if you've already installed Quicksilver] download and install "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy/Quicksilver-b57-3840.tar.gz/qr_code
+# Invoke Quicksilver and hit @<Command><,>@ (hold the squiggly apple key and tap the comma key) to get to the preferences panel
+# click to Plugins and check the "Terminal Module" plugin
+# [skippable if you've already installed it] download and install "MacPorts":http://www.macports.org/install.php
+# from Terminal.app:
+  @$ sudo port install rb-rubygems ruby git-core@
+  (rubygems and ruby are for Ruby scripts, git-core is the git source code versioning system)
+  @$ makedir ~/code@
+  @$ cd ~/code@
+  @$ git clone git://github.com/matthewfallshaw/clipboard-scripts.git@
+  @$ cd clipboard-scripts@
+  @$ ./install.rb@
+  (say 'a' to accept everything)
+  @$ cat README@
+  (follow those instructions)
+# now (and always):
+## select and copy any text which has formatting
+## Invoke Quicksilver
+## type enough of @pb-unformat@ to let Quicksilver find that script (probably just @unformat@)
+   now you have completely unformated text in the clipboard 
 
 h2. Install
 
+# @./install.rb@ from this directory (and 'a' to accept everything)
 # Invoke Quicksilver
-# <code><Command><,></code> (for preferences)
+# @<Command><,>@ (for preferences)
 # Catalog
 # Click the '+' in the bottom left and add a File & Folder Scanner
 # Select the bin subdirectory of this directory
