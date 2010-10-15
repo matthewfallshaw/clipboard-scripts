@@ -12,33 +12,25 @@ h2. Prerequisites
 
 @ruby@, @rubygems@
 (you could get those through "MacPorts":http://www.macports.org/install.php with @sudo port install rb-rubygems ruby@)
-
-h3. Prerequisites (… less geeky version)
-
-# [skippable if you've already installed Quicksilver] download and install "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy/Quicksilver-b57-3840.tar.gz/qr_code
-# Invoke Quicksilver and hit @<Command><,>@ (hold the squiggly apple key and tap the comma key) to get to the preferences panel
-# click to Plugins and check the "Terminal Module" plugin
-# [skippable if you've already installed it] download and install "MacPorts":http://www.macports.org/install.php
-# from Terminal.app:
-  @$ sudo port install rb-rubygems ruby git-core@
-  (rubygems and ruby are for Ruby scripts, git-core is the git source code versioning system)
-  @$ makedir ~/code@
-  @$ cd ~/code@
-  @$ git clone git://github.com/matthewfallshaw/clipboard-scripts.git@
-  @$ cd clipboard-scripts@
-  @$ ./install.rb@
-  (say 'a' to accept everything)
-  @$ cat README@
-  (follow those instructions)
-# now (and always):
-## select and copy any text which has formatting
-## Invoke Quicksilver
-## type enough of @pb-unformat@ to let Quicksilver find that script (probably just @unformat@)
-   now you have completely unformated text in the clipboard 
+("Install (… less geeky version)" will help if you didn't understand that)
+"Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy (or something equally awesome (if such a thing exists)) with the "Terminal Module" plugin
 
 h2. Install
 
-# @./install.rb@ from this directory (and 'a' to accept everything)
+# [skippable if you've already installed Quicksilver or a mythical something equally awesome] download and install "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy/Quicksilver-b57-3840.tar.gz/qr_code
+# Invoke Quicksilver and hit @<Command><,>@ (hold the squiggly apple key and tap the comma key, which I'll say as @<Command><,>@ next time) to get to the preferences panel
+# click to Plugins and tick the "Terminal Module" plugin checkbox
+# *are you a geek?*
+#* *no:*
+#*# make a new directory for geeky stuff like this (I suggest @code@ in your home directory)
+#*# download "these scripts":http://github.com/matthewfallshaw/clipboard-scripts/zipball/master , and unzip them into your new @code@ directory (that'll unzips to an ugly directory name that includes this GitHub account and a version string - you may want to rename it to just plain @clipboard-scripts@)
+#* *yes:*
+#*# from your code directory: @git clone git://github.com/matthewfallshaw/clipboard-scripts.git@
+# from Terminal.app:
+  (since you have Quicksilver you won't reach for your mouse to open Terminal.app, you'll Invoke Quicksilver (default @<Ctrl><Space>@), then type just enough of @terminal@ for Quicksilver to offer it to you, and hit <Enter>)
+  @$ cd ~/code/clipboard-scripts@  (that's the new, unzipped directory you just downloaded, or the directory you just @git cloned@)
+  @$ ./install.rb@
+  (say 'a' to accept everything)
 # Invoke Quicksilver
 # @<Command><,>@ (for preferences)
 # Catalog
@@ -46,7 +38,12 @@ h2. Install
 # Select the bin subdirectory of this directory
 # Click the small 'i' in the bottom right
 # "Include Contents:" Folder Contents (Depth: 2)
-# Command r (to rescan catalog)
+# @<Command><r>@ (to rescan catalog)
+# now (and always):
+## select and copy any text which has formatting
+## Invoke Quicksilver
+## type enough of @pb-unformat@ to let Quicksilver find that script (probably just @unformat@)
+   now you have completely unformated text in the clipboard 
 
 h2. License
 
