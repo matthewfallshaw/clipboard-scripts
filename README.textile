@@ -10,16 +10,16 @@ h2. ToDo
 
 h2. Prerequisites
 
-@ruby@, @rubygems@
-(you could get those through "MacPorts":http://www.macports.org/install.php with @sudo port install rb-rubygems ruby@)
-("Install (… less geeky version)" will help if you didn't understand that)
-"Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy (or something equally awesome (if such a thing exists)) with the "Terminal Module" plugin
+* @ruby@, @rubygems@ (both of these are part of OSX since Tiger)
+* "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy (or something equally awesome (if such a thing exists)) with the "Terminal Module" plugin
+** Quicksilver Install
+**# [skippable if you've already installed Quicksilver or a mythical something equally awesome] download and install "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy/Quicksilver-b57-3840.tar.gz/qr_code
+**# Invoke Quicksilver and hit @<Command><,>@ (hold the squiggly apple key and tap the comma key, which I'll say as @<Command><,>@ next time) to get to the preferences panel
+**# click to Plugins and tick the "Terminal Module" plugin checkbox
+
 
 h2. Install
 
-# [skippable if you've already installed Quicksilver or a mythical something equally awesome] download and install "Quicksilver":http://github.com/downloads/tiennou/blacktree-alchemy/Quicksilver-b57-3840.tar.gz/qr_code
-# Invoke Quicksilver and hit @<Command><,>@ (hold the squiggly apple key and tap the comma key, which I'll say as @<Command><,>@ next time) to get to the preferences panel
-# click to Plugins and tick the "Terminal Module" plugin checkbox
 # *are you a geek?*
 #* *no:*
 #*# make a new directory for geeky stuff like this (I suggest @code@ in your home directory)
@@ -27,7 +27,7 @@ h2. Install
 #* *yes:*
 #*# from your code directory: @git clone git://github.com/matthewfallshaw/clipboard-scripts.git@
 # from Terminal.app:
-  (since you have Quicksilver you won't reach for your mouse to open Terminal.app, you'll Invoke Quicksilver (default @<Ctrl><Space>@), then type just enough of @terminal@ for Quicksilver to offer it to you, and hit <Enter>)
+  (since you have Quicksilver you won't reach for your mouse to open Terminal.app, you'll Invoke Quicksilver (default @<Ctrl><Space>@), then type just enough of @terminal@ for Quicksilver to offer it to you, and hit @<Enter>@)
   @$ cd ~/code/clipboard-scripts@  (that's the new, unzipped directory you just downloaded, or the directory you just @git cloned@)
   @$ ./install.rb@
   (say 'a' to accept everything)
