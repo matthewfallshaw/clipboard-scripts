@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby -w
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder_path")))
+clipboard do |c|
+  c.sub(/^.*Dropbox/, 'Dropbox:')
+end

@@ -3,15 +3,14 @@
 
 %w[uri rubygems json].each {|l| require l }
 
-clip_url = IO.popen('pbpaste', 'r').read
 output = ''
 
-require File.join(File.dirname(__FILE__), "../lib/notify")
+require File.join(File.dirname(__FILE__), "lib/helper")
 
 class BitlyError < Exception; end
 
 begin
-  encoded_url = clip_url.match(/^http/) ? clip_url : "http://#{clip_url}" 
+  encoded_url = clipboard.match(/^http/) ? clipboard : "http://#{clipboard}" 
   encoded_url = URI.parse(URI.encode(encoded_url)).normalize.to_s
 
   curl_url_json = `curl --stderr /dev/null \"http://api.bit.ly/shorten?longUrl=#{ encoded_url }&version=2.0.1&login=yourbitlylogin&apiKey=yourbitlyapikey&history=1\"`
@@ -22,8 +21,7 @@ begin
   else
     raise BitlyError, bitly_result.collect {|k,v| "#{k}:#{v}" }.join('; ')
   end
-  IO.popen('pbcopy', 'w').print(output)
-  notify(output)
+  self.clipboard = notify(output)
 rescue Exception => e
   notify("# Failed, sorry: #{e.message}")
 end

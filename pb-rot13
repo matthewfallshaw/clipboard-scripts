@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # ROT13 the contents of the OSX clipboard
 
-require File.join(File.dirname(__FILE__), "../lib/notify")
+require File.join(File.dirname(__FILE__), "../lib/helper")
 
 class String
   def rot13
@@ -9,6 +9,4 @@ class String
   end
 end
 
-output = IO.popen('pbpaste', 'r').read.rot13
-IO.popen('pbcopy', 'w').print(output)
-notify(output, true)
+clipboard(true) {|c| c.rot13 }
