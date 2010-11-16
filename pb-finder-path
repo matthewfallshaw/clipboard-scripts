@@ -2,5 +2,5 @@
 
 require File.join(File.dirname(__FILE__), "../lib/helper")
 
-system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder_path")))
+system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder-path.bash")))
 notify clipboard
