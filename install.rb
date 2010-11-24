@@ -9,28 +9,29 @@
 
 IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin]
 
-def replace_file(file)
+def replace_file!(file)
   system %Q{rm -r "$PWD/bin/#{file}"} if File.exist?("$PWD/bin/#{file}")
-  copy_file(file)
+  copy_file!(file)
 end
  
-def copy_file(file)
+def copy_file!(file)
   f = Pathname.new("#{ENV["PWD"]}/#{file}")
-  if f.symlink?
-    puts "#{file} (really #{f.realpath}): copied"
-    system %Q{cp -r "#{f.realpath}" "$PWD/bin/#{file}"}
-  else
-    puts "#{file}: copied"
-    system %Q{cp -r "$PWD/#{file}" "$PWD/bin/#{file}"}
-  end
+  puts "#{file}#{f.symlink? ? " (really #{f.realpath})" : ""}: copied"
+  system %Q{cp -r "#{f.realpath}" "$PWD/bin/#{file}"}
+  make_binfile_executable!(file)
 end
 
-def copy_and_replace_secrets(file)
+def copy_and_replace_secrets!(file)
   system %[cp "$PWD/#{file}" "$PWD/bin/#{file}"]
   secrets[file].each do |search_term, replace_term|
     system %[ruby -pi -e 'gsub(/#{Shellwords.escape(search_term)}/, "#{Shellwords.escape(replace_term)}")' "$PWD/bin/#{file}"]
   end
   puts "#{file}: copied and updated with secrets"
+  make_binfile_executable!(file)
+end
+
+def make_binfile_executable!(file)
+  system %Q{chmod u+x "$PWD/bin/#{file}"}
 end
 
 def secrets
@@ -44,13 +45,13 @@ def secrets
                end
 end
 
-def replace(file)
+def replace!(file)
   original = File.join(File.dirname(__FILE__), "bin", file)
 
   if secrets[file] and not File.directory?(file)
-    copy_and_replace_secrets(file)
+    copy_and_replace_secrets!(file)
   elsif @replace_all
-    replace_file(file)
+    replace_file!(file)
   elsif File.exist?(original)
     if File.directory?(file)
       puts "#{file}: skipped"
@@ -59,9 +60,9 @@ def replace(file)
       case $stdin.gets.chomp
       when 'a'
         @replace_all = true
-        replace_file(file)
+        replace_file!(file)
       when 'y'
-        replace_file(file)
+        replace_file!(file)
       when 'q'
         exit
       else
@@ -69,7 +70,7 @@ def replace(file)
       end
     end
   else
-    copy_file(file)
+    copy_file!(file)
   end
 end
 
@@ -79,13 +80,13 @@ if ARGV.empty?
   Dir.chdir File.dirname(__FILE__) do
     Dir['*'].each do |file|
       next if IGNORE_LIST.include?(file)
-      replace(file)
+      replace!(file)
     end
   end
 else
   ARGV.each do |file|
     if File.exist?(file)
-      replace(file)
+      replace!(file)
     else
       puts "What is this #{file} of which you speak? I see it not."
     end
