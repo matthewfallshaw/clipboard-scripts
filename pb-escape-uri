@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# URI escape the contents of the OSX clipboard
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+require 'uri'
+clipboard {|c| URI.escape(c) }
