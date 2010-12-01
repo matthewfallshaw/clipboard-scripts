@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# Clipboard a random number
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+clipboard {|c| rand(999999) }
