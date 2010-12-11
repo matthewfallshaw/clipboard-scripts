@@ -5,7 +5,7 @@
 
 output = ''
 
-require File.join(File.dirname(__FILE__), "lib/helper")
+require File.join(File.dirname(__FILE__), "../lib/helper")
 
 class BitlyError < Exception; end
 
