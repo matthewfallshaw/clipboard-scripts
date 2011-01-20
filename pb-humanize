@@ -3,4 +3,4 @@
 require File.join(File.dirname(__FILE__), "../lib/helper")
 
 %w[rubygems active_support/inflector].each {|l| require l }
-clipboard {|c| c.humanize }
+clipboard {|c| c.gsub(/\b.\b/,' ').humanize }
