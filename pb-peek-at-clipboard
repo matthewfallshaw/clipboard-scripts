@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pbpaste | growlnotify -H localhost
+pbpaste | growlnotify -sH localhost
