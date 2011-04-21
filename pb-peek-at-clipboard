@@ -1,3 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env ruby
+# Growl notify the current content of the clipboard
+require File.join(File.dirname(__FILE__), "../lib/helper")
 
-pbpaste | growlnotify -sH localhost
+LONG_MESSAGE_LENGTH = 100
+
+sticky = clipboard.size > LONG_MESSAGE_LENGTH
+notify(clipboard, sticky)
