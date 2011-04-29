@@ -1,0 +1,4 @@
+#!/bin/sh
+
+pbpaste | sort -f | pbcopy
+/usr/local/bin/growlnotify -a Quicksilver -t "Sorted" -m "`pbpaste`"
