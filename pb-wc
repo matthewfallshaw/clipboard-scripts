@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 # Word count the clipboard on OSX
+require File.join(File.dirname(__FILE__), "../lib/helper")
 
-out=`pbpaste | wc -w | tr -d \\n`
-/usr/local/bin/growlnotify -s -a Quicksilver -t "Wordcount" -m "$out words"
-echo -n $out
+chars = clipboard.size
+words = clipboard.scan(/[\w-]+/).size
+notify("#{words} words\n(#{chars} characters)")
