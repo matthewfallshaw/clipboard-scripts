@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# Remove spaces from the clipboard on OSX
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+clipboard {|c| c.gsub(/ /,"") }
