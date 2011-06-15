@@ -1,6 +1,24 @@
 #!/usr/bin/env ruby
 # Sentence caserize the contents of the OSX clipboard
 require File.join(File.dirname(__FILE__), "../lib/helper")
-
 %w[rubygems active_support/inflector].each {|l| require l }
-clipboard {|c| c.gsub(/\b.\b/,' ').humanize }
+
+class HumanizingString < String
+  def all_caps?
+    self[/[^a-z]+/].length == self.length
+  end
+
+  def humanize
+    self.gsub!(/\b.\b/,' ')
+    all_caps = all_caps?
+    output = ""
+    if all_caps
+      super.each("\s") {|w| output << w.capitalize}
+    else
+      output = super
+    end
+    output
+  end
+end
+
+clipboard {|c| HumanizingString.new(c).humanize }
