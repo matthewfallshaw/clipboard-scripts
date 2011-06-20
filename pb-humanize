@@ -9,7 +9,7 @@ class HumanizingString < String
   end
 
   def humanize
-    self.gsub!(/\b.\b/,' ')
+    self.gsub!(/[_-]/,' ')
     all_caps = all_caps?
     output = ""
     if all_caps
