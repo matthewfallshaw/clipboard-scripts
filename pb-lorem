@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# Add some lorem ipsum to the OSX clipboard
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+clipboard { `/usr/bin/env lorem 1` }
