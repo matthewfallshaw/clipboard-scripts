@@ -7,7 +7,7 @@
 
 %w[shellwords rubygems rake yaml pathname].each {|l| require l }
 
-IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin]
+IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin spec]
 
 def replace_file!(file)
   system %Q{rm -r "$PWD/bin/#{file}"} if File.exist?("$PWD/bin/#{file}")

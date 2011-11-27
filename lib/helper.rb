@@ -1,3 +1,6 @@
+$: << File.join(File.dirname(__FILE__))
+require File.basename($0).sub(/pb-/,'') rescue nil
+
 def clipboard(sticky = false, &block)
   c = IO.popen('pbpaste', 'r').read
   if block_given?
