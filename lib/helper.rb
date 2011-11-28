@@ -1,5 +1,9 @@
 $: << File.join(File.dirname(__FILE__))
-require File.basename($0).sub(/pb-/,'') rescue nil
+begin
+  require File.basename($0).sub(/pb-/,'')
+rescue LoadError
+  nil
+end
 
 def clipboard(sticky = false, &block)
   c = IO.popen('pbpaste', 'r').read
