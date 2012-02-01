@@ -19,9 +19,9 @@ fi
 
 if [ $# -ne 1 ]
 then
-  DOMAIN="$(/usr/bin/osascript 2>/dev/null <<-'__HEREDOC__'
+  DOMAIN="$(/usr/bin/osascript <<-'__HEREDOC__'
 with timeout of 300 seconds
-  tell application "System Events"
+  tell application (path to frontmost application as text)
     activate
     set input to display dialog "Please enter the domain:" with title "Domain" with icon note default answer "" buttons {"Cancel", "OK"} default button 2 giving up after 295
     return text returned of input as string
@@ -33,9 +33,9 @@ else
   DOMAIN=$1
 fi
 
-echo -n "$(/usr/bin/osascript 2>/dev/null <<-'__HEREDOC__'
+echo -n "$(/usr/bin/osascript <<-'__HEREDOC__'
 with timeout of 300 seconds
-tell application "System Events"
+tell application (path to frontmost application as text)
   activate
   set input to display dialog "Please enter your master password:" with title "Password" with icon caution default answer "" buttons {"Cancel", "OK"} default button 2 giving up after 295 with hidden answer
   return text returned of input as string
