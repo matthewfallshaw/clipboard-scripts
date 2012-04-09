@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ $(pbpaste | wc -l) -gt 1 ]; then
-  pbpaste | sort -fn | pbcopy;
+  pbpaste | sort -if | pbcopy;
 else
-  pbpaste | tr , "\n" | sed 's/^ //' | sort -fn | paste -s -d, - | pbcopy
+  pbpaste | tr , "\n" | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
 fi
 /usr/bin/env growlnotify -a Quicksilver -t "Sorted" -m "`pbpaste`"
