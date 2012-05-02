@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+# Growl notify the current content of the clipboard
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+notify(clipboard, true)
