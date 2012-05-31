@@ -7,8 +7,6 @@
 
 %w[shellwords rubygems rake yaml pathname].each {|l| require l }
 
-IGNORE_LIST = %w[install.rb Rakefile README.textile vendor lib bin spec]
-
 def replace_file!(file)
   system %Q{rm -r "$PWD/bin/#{file}"} if File.exist?("$PWD/bin/#{file}")
   copy_file!(file)
@@ -78,8 +76,7 @@ end
 `mkdir -p #{File.expand_path(File.join(File.dirname(__FILE__)),"bin")}`
 if ARGV.empty?
   Dir.chdir File.dirname(__FILE__) do
-    Dir['*'].each do |file|
-      next if IGNORE_LIST.include?(file)
+    Dir['pb-*'].each do |file|
       replace!(file)
     end
   end
