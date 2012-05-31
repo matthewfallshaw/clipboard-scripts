@@ -1,1 +1,8 @@
-pb-undasherize
+#!/usr/bin/env ruby
+# Un-Dasherize the clipboard on OSX
+
+require File.join(File.dirname(__FILE__), "../lib/helper")
+
+clipboard do |c|
+  c.gsub(/[-_]/," ").gsub(/^ +| +$/,"")
+end
