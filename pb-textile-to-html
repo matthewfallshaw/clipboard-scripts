@@ -4,7 +4,11 @@
 # RedCloth[http://whytheluckystiff.net/ruby/redcloth/], so assuming it's
 # Textile or Markdown) and send it to STDOUT
 
-require File.join(File.dirname(__FILE__), "../lib/helper")
+begin
+  require_relative("../lib/helper")
+rescue
+  require File.join(File.dirname(__FILE__), "../lib/helper")
+end
 
 %w[rubygems redcloth].each {|l| require l }
 clipboard(true) do |c|

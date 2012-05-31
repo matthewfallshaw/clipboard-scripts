@@ -3,7 +3,11 @@
 # Convert the contents of the clipboard to textile (with
 # https://github.com/jystewart/html2textile and send it to STDOUT
 
-require File.join(File.dirname(__FILE__), "../lib/helper")
+begin
+  require_relative("../lib/helper")
+rescue
+  require File.join(File.dirname(__FILE__), "../lib/helper")
+end
 
 %w[rubygems html2textile].each {|l| require l }
 clipboard(true) do |c|

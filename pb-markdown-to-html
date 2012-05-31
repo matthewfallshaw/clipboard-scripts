@@ -4,7 +4,11 @@
 # BlueCloth[http://deveiate.org/projects/BlueCloth], so assuming it's Markdown)
 # and send it to STDOUT
 
-require File.join(File.dirname(__FILE__), "../lib/helper")
+begin
+  require_relative("../lib/helper")
+rescue
+  require File.join(File.dirname(__FILE__), "../lib/helper")
+end
 
 %w[rubygems bluecloth].each {|l| require l }
 clipboard(true) do |c|
