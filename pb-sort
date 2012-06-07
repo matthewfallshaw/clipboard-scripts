@@ -1,4 +1,5 @@
 #!/bin/sh
+PATH=/usr/local/bin:/opt/local/bin:$PATH
 
 if [ $(pbpaste | wc -l) -gt 1 ]; then
   pbpaste | sort -if | pbcopy;
