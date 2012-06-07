@@ -22,6 +22,12 @@ end
 
 def notify(message, sticky = false)
   require 'shellwords'
-  `/usr/bin/env growlnotify#{sticky ? " -s" : ""} -a Quicksilver -m #{message.to_s.shellescape}`
+  `#{notifyscript}#{sticky ? " -s" : ""} -a Quicksilver -m #{message.to_s.shellescape}`
   message
+end
+
+def notifyscript
+  script = `which growlnotify`
+  return script unless script.empty?
+  %w[/usr/local/bin/growlnotify /opt/local/bin/growlnotify].find {|path| File.exist?(path) }
 end
