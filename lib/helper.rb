@@ -27,7 +27,7 @@ def notify(message, sticky = false)
 end
 
 def notifyscript
-  script = `which growlnotify`
+  script = `which growlnotify`.chomp
   return script unless script.empty?
   %w[/usr/local/bin/growlnotify /opt/local/bin/growlnotify].find {|path| File.exist?(path) }
 end
