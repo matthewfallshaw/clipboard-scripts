@@ -2,4 +2,6 @@
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
 /usr/bin/env pwgen -1 | tr -d \\n | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -m "Password generated"
+/usr/bin/env growlnotify -a Quicksilver -m "New password in clipboard.
+Other options:
+$(pwgen -N32 | sed 's/^/    /')"
