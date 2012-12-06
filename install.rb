@@ -82,7 +82,11 @@ if ARGV.empty?
   end
 else
   ARGV.each do |file|
-    if File.exist?(file)
+    if %w[-y -a].include?(file)
+      @replace_all = true
+    elsif file == "-n"
+      @replace_all = false
+    elsif File.exist?(file)
       replace!(file)
     else
       puts "What is this #{file} of which you speak? I see it not."
