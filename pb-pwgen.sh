@@ -28,3 +28,5 @@ Other options:
 #{`pwgen -N10 | sed 's/^/    /'`}
 #{(1..12).collect {random_word}.join(" ")}
 STR
+
+# vi: filetype=ruby
