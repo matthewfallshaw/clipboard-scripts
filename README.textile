@@ -19,6 +19,11 @@ h2. Prerequisites
 
 h2. Install
 
+# Prereq's
+* QS Terminal plugin
+* [for most scripts] Growl and GrowlNotify: 2.x from the App Store, 1.3 for free from http://growl.info/downloads#generaldownloads. GrowlNotify from that download page even if you buy from the App Store.
+* [for some scripts] 
+
 # *are you a geek?*
 #* *no:*
 #*# make a new directory for geeky stuff like this (I suggest @code@ in your home directory)
