@@ -19,7 +19,7 @@ def password
 end
 
 # put a new pw in the clipboard without looking at it
-system("#{PWGEN_COMMAND} -1 | tr -d \\n | pbcopy")
+system("#{PWGEN_COMMAND} -1 | tr -d \"\\n\" | pbcopy")
 
 notify(<<STR, true)
 New password in clipboard.
