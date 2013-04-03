@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# decode links to get destination url
+
+require 'uri'
+require 'net/http'
+
+begin
+  require_relative("../lib/helper")
+rescue
+  require File.join(File.dirname(__FILE__), "../lib/helper")
+end
+
+def fetch(uri)
+  u = URI.parse(uri)
+  c = Net::HTTP.new(u.host)
+  h = c.head("#{u.path}?#{u.query}")
+  case h
+  when Net::HTTPSuccess then u.to_s
+  when Net::HTTPRedirection then fetch(h['location'])
+  else
+    h.error!
+  end
+end
+
+if clipboard.match(Regexp.new(%q[^http]))
+  clipboard do |c|
+    fetch(c)
+  end
+else
+  notify("That doesn't look like a URL.")
+end
