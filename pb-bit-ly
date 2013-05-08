@@ -17,7 +17,7 @@ begin
   encoded_url = clipboard.match(/^http/) ? clipboard : "http://#{clipboard}" 
   encoded_url = URI.parse(URI.encode(encoded_url)).normalize.to_s
 
-  curl_url_json = `curl --stderr /dev/null \"http://api.bit.ly/shorten?longUrl=#{ encoded_url }&version=2.0.1&login=yourbitlylogin&apiKey=yourbitlyapikey&history=1\"`
+  curl_url_json = `curl --stderr /dev/null \"http://api.bit.ly/shorten?longUrl=#{ CGI.escape(encoded_url) }&version=2.0.1&login=yourbitlylogin&apiKey=yourbitlyapikey&history=1\"`
   bitly_result = JSON.parse(curl_url_json)
 
   if bitly_result["results"]
