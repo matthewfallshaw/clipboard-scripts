@@ -21,7 +21,7 @@ end
 # put a new pw in the clipboard without looking at it
 system("#{PWGEN_COMMAND} -1 | tr -d \"\\n\" | pbcopy")
 
-notify(<<STR)
+notify(<<STR, true)
 New password in clipboard.
 
 Other options:
