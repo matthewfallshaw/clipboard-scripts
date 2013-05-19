@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # http://bit.ly/ url the clipboard on OSX
 
-%w[uri rubygems json].each {|l| require l }
+%w[uri cgi rubygems json].each {|l| require l }
 
 output = ''
 
