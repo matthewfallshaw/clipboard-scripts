@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
 # decode Google search links to get destination url
 
+GOOGLE_LINK_RE = %q[https?://www.google.com(?:.au)?/url\?.*(?:url|q)=(http(?:%3A%2F%2F|://)[^&]+)]
+# https://www.google.com/url?q=http://lesswrong.com/lw/jg/planning_fallacy/&sa=U&ei=G6ulUf-LComYqAHbuIDQCQ&ved=0CAcQFjAA&client=internal-uds-cse&usg=AFQjCNFnb1OtVL1uuIiuvTnjaqOaqsraxQ
+# https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CDAQFjAA&url=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FPlanning_fallacy&ei=_qulUbTqOMmCiQfbx4CYCw&usg=AFQjCNGFtR1K-hSLR-8aeW0EowOGhDcuSQ&sig2=NXIWMQfEp9nMCDLgSwLuTw&bvm=bv.47008514,d.aGc
+
 require 'uri'
 
 begin
@@ -9,7 +13,7 @@ rescue
   require File.join(File.dirname(__FILE__), "../lib/helper")
 end
 
-if clipboard.match(Regexp.new(%q[^https?://www.google.com(?:.au)?/url\?.+&url=(http%3A%2F%2F[^&]+)&]))
+if clipboard.match(Regexp.new(GOOGLE_LINK_RE))
   clipboard { URI.decode($1) }
 else
   notify("That doesn't look like a Google search URL.")
