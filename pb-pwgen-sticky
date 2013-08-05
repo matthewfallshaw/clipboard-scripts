@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 PWGEN_COMMAND = %w[/usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(p) }
+PWGEN_LENGTH = 14
 WORDLIST = `find ~/Documents/wordlist -iname '*common*'`.chomp
 
 begin
