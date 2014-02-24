@@ -9,6 +9,6 @@ end
 
 clipboard do |c|
   output = ""
-  c.each("\s") {|w| output << w.capitalize}
+  c.split("\s").each {|w| output << w.capitalize}
   output
 end
