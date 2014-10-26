@@ -6,12 +6,8 @@ GOOGLE_LINK_RE = %q[https?://www.google.com(?:.au)?/url\?.*(?:url|q)=(http(?:%3A
 # https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CDAQFjAA&url=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FPlanning_fallacy&ei=_qulUbTqOMmCiQfbx4CYCw&usg=AFQjCNGFtR1K-hSLR-8aeW0EowOGhDcuSQ&sig2=NXIWMQfEp9nMCDLgSwLuTw&bvm=bv.47008514,d.aGc
 
 require 'uri'
-
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 
 if clipboard.match(Regexp.new(GOOGLE_LINK_RE))
   clipboard { URI.decode($1) }

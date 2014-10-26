@@ -1,13 +1,10 @@
 #!/usr/bin/env ruby
 # Gravatar URL from email address in the OSX clipboard
 
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
-
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 require 'digest/md5'
+
 if clipboard.match(Regexp.new('^[\w!#$%&\'*+/=?^`{|}~\.-]+@(?:[\w-]+\.)+(?:[\w]{2,3}|museum)$'))
   clipboard do |c|
    "http://gravatar.com/avatar/#{Digest::MD5.hexdigest(c.strip.downcase)}"

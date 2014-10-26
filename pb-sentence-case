@@ -1,11 +1,8 @@
 #!/usr/bin/env ruby
 # Sentence caserize the contents of the OSX clipboard
 
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 
 clipboard do |c|
   c.downcase.sub(/^./) {|x| x.upcase }

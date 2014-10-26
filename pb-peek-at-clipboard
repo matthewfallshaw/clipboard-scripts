@@ -1,10 +1,8 @@
 #!/usr/bin/env ruby
 # Growl notify the current content of the clipboard
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
+
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 
 LONG_MESSAGE_LENGTH = 100
 

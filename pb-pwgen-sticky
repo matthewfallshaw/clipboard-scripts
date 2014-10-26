@@ -1,13 +1,10 @@
 #!/usr/bin/env ruby
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
+
 PWGEN_COMMAND = %w[/usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(p) }
 PWGEN_LENGTH = 14
 WORDLIST = `find ~/Documents/wordlist -iname '*common*'`.chomp
-
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
 
 def random_word
   line = rand(`wc -l #{WORDLIST} | awk {'print $1'}`.chomp.to_i) + 1

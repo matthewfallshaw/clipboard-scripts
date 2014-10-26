@@ -3,12 +3,8 @@
 
 require 'uri'
 require 'net/http'
-
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 
 def fetch(uri)
   u = URI.parse(uri)

@@ -1,10 +1,7 @@
 #!/usr/bin/env ruby -w
 
-begin
-  require_relative("../lib/helper")
-rescue
-  require File.join(File.dirname(__FILE__), "../lib/helper")
-end
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
 
 system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder-path.bash")))
 clipboard do |c|
