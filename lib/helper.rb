@@ -22,7 +22,7 @@ end
 
 def notify(message, sticky = false)
   require 'shellwords'
-  `#{notifyscript}#{sticky ? " -s" : ""} -a Quicksilver -m #{message.to_s.shellescape}`
+  `#{notifyscript}#{sticky ? " -s" : ""} -a 'Alfred 2' -m #{message.to_s.shellescape}`
   message
 end
 
