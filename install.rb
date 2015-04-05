@@ -17,7 +17,7 @@ def copy_file!(file)
   puts "#{file}#{f.symlink? ? " (really #{f.realpath})" : ""}: copied"
   system %Q{cp -r "#{f.realpath}" "$PWD/bin/#{file}"}
   make_binfile_executable!(file)
-  make_app!(file)
+#   make_app!(file)
 end
 
 def copy_and_replace_secrets!(file)
@@ -33,10 +33,10 @@ def make_binfile_executable!(file)
   system %Q{chmod u+x "$PWD/bin/#{file}"}
 end
 
-def make_app!(file)
-  app_name = file.split("-").collect {|w| w.capitalize }.join(" ")
-  system %Q{platypus -y -a "#{app_name}" -o None -i clipboard-scripts.icns -I com.matthewfallshaw.#{file} -B -R -f lib bin/#{file} "apps/#{app_name}.app"}
-end
+# def make_app!(file)
+#   app_name = file.split("-").collect {|w| w.capitalize }.join(" ")
+#   system %Q{platypus -y -a "#{app_name}" -o None -i clipboard-scripts.icns -I com.matthewfallshaw.#{file} -B -R -f lib bin/#{file} "apps/#{app_name}.app"}
+# end
 
 def secrets
   @secrets ||= begin
