@@ -5,7 +5,5 @@
 require "helper"
 
 clipboard do |c|
-  output = ""
-  c.split("\s").each {|w| output << w.capitalize}
-  output
+  c.split("\s").collect {|w| w.capitalize}.join(" ")
 end
