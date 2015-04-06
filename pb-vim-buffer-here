@@ -35,5 +35,5 @@ end timeout
   __HEREDOC__`.chomp
 exit 0 if file_name.empty?
 
-system("mvim '#{file_name}'") 
+system("PATH=~/bin:/usr/local/bin:$PATH; mvim '#{file_name}'") 
 exit 0
