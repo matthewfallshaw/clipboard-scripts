@@ -7,5 +7,5 @@ require "helper"
 %w[rubygems htmlentities].each {|l| require l }
 
 clipboard do |c|
-  HTMLEntities.decode_entities(c)
+  HTMLEntities.new.decode(c)
 end
