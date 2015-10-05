@@ -13,9 +13,9 @@ end tell
 END`.chomp
 if File.exist?(finder_path)
   if File.directory?(finder_path)
-    finder_path = File.join(finder_path, "tmp.txt")
+    finder_path = File.join(finder_path, "readme.txt")
   elsif `file "#{finder_path}"`.chomp.match(/text/).nil?
-    finder_path = File.join(File.dirname(finder_path), "tmp.txt")
+    finder_path = File.join(File.dirname(finder_path), "readme.txt")
   else
     # happy to use that file
     dialog_text = "Open file in Vim (change to open a new file)"
@@ -35,5 +35,7 @@ end timeout
   __HEREDOC__`.chomp
 exit 0 if file_name.empty?
 
-system("PATH=~/bin:/usr/local/bin:$PATH; mvim '#{file_name}'") 
+# Spawn mvim & detatch
+pid = Process.spawn("mvim '#{file_name}'") 
+Process.detach pid
 exit 0
