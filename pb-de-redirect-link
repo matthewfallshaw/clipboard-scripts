@@ -6,7 +6,15 @@ require 'net/http'
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
 
+@loop_detector = []
+
 def fetch(uri)
+  if @loop_detector.include?(uri)
+    notify "We're looping; something's wrong. Try this one anyway…"
+    return uri
+  end
+  @loop_detector << uri
+
   u = URI.parse(uri)
   c = Net::HTTP.new(u.host)
   h = c.head("#{u.path}?#{u.query}")
