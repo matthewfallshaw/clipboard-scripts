@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# Clear empty lines & trailing spaces from the clipboard on OSX
+
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
+
+clipboard {|c| c.gsub(/\s+$/,"").gsub(/^\s+/,"").gsub(/^$\n/,"") }
