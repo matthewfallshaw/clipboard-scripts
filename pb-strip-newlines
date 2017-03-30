@@ -1,3 +1,5 @@
 #!/bin/sh
+PATH=/usr/local/bin:/opt/local/bin:$PATH
+
 pbpaste | tr -d \\n | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -m "`pbpaste`"
+/usr/bin/env growlnotify -a Quicksilver -t "Clipboard newlines striped:" -m "`pbpaste`"

@@ -6,4 +6,4 @@ if [ $(pbpaste | wc -l) -gt 1 ]; then
 else
   pbpaste | tr , "\n" | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
 fi
-/usr/bin/env growlnotify -a Quicksilver -t "Sorted" -m "`pbpaste`"
+/usr/bin/env growlnotify -a Quicksilver -t "Sorted:" -m "`pbpaste`"
