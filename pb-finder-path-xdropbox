@@ -5,5 +5,5 @@ require "helper"
 
 system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder-path.bash")))
 clipboard do |c|
-  c.sub(/^.*?Dropbox( \([^)]+?\))?/, 'Dropbox:')
+  c.sub(/^\/Users\/.*?\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').sub(/^\/Users\/.*?\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
 end
