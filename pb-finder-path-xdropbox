@@ -3,7 +3,7 @@
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
 
-system(File.expand_path(File.join(File.dirname(__FILE__), "../lib/finder-path.bash")))
+system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
 clipboard do |c|
-  c.sub(/^\/Users\/.*?\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').sub(/^\/Users\/.*?\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
+  c.gsub(/\/Users\/.*?\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').gsub(/\/Users\/.*?\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
 end
