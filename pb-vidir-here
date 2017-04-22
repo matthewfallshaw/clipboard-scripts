@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby -w
+
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require "helper"
+
+system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
+c = clipboard
+finder_path = c.split.first
+if File.exist?(finder_path)
+  if File.directory?(finder_path)
+    # happy
+  else
+    finder_path = File.dirname(finder_path)
+  end
+
+  system("osascript <<-END
+tell application \"Terminal\"
+	do script \"vidir /Users/matt/code/clipboard-scripts/bin/\"
+	activate
+end tell
+         END")
+else
+  notify "You'll need to select a directory in Finder, then I can vimdir it for you."
+end
