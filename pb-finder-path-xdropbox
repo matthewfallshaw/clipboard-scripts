@@ -5,5 +5,5 @@ require "helper"
 
 system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
 clipboard do |c|
-  c.gsub(/\/Users\/.*?\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').gsub(/\/Users\/.*?\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
+  c.gsub(/\/Users\/.*?\//, '~/').gsub(/~\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').gsub(/~\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
 end
