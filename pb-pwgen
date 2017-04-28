@@ -3,13 +3,14 @@
 require "helper"
 
 PWGEN_COMMAND = %w[/usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(p) }
-PWGEN_LENGTH = 14
-WORDLIST = `find ~/Documents/wordlist -iname '*common*'`.chomp
+PWGEN_LENGTH = 20
+WORDLIST = `find ~/Documents/wordlist* -iname '*crossword*'`.chomp
 
 def random_word
-  line = rand(`wc -l #{WORDLIST} | awk {'print $1'}`.chomp.to_i) + 1
+  @wordlist_length ||= `wc -l #{WORDLIST} | awk {'print $1'}`.chomp.to_i
+  line = rand(@wordlist_length) + 1
   word = `head -n#{line} #{WORDLIST} | tail -1`.chomp
-  word.downcase.gsub(/['!&.\/0-9]/,'').gsub(/[\s\W]/,'-').gsub(/\+/,'-')
+  word.downcase.gsub(/['!&.\/0-9]/,'').gsub(/[\W]/,'-').gsub(/\+/,'-')
 end
 
 def password
@@ -19,12 +20,14 @@ end
 # put a new pw in the clipboard without looking at it
 system("#{PWGEN_COMMAND} #{PWGEN_LENGTH} -1 | tr -d \"\\n\" | pbcopy")
 
-notify(<<STR)
+notify(<<STR, true)
 New password in clipboard.
 
 Other options:
-#{`pwgen #{PWGEN_LENGTH} -N10 | sed 's/^/    /'`}
-#{(1..12).collect {random_word}.join(" ")}
+
+#{password}
+
+#{(1..40).collect {random_word}.join(" ")}
 STR
 
 # vi: filetype=ruby
