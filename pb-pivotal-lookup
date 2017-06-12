@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+# Lookup PivotalTracker story information from the hints in the OSX clipboard
+
+%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require 'helper'
+%w[json open-uri].each {|l| require(l) }
+
+TOKEN = 'yourpivotaltoken'
+STORYID_PATTERN = "(\\d{8,})"
+
+begin
+  clipboard do |c|
+    story_id = case c
+               when %r[https://www\.pivotaltracker\.com/story/show/#{STORYID_PATTERN}]
+                 $1
+               when %r[https://www\.pivotaltracker\.com/n/projects/\d+/stories/#{STORYID_PATTERN}]
+                 $1
+               when %r[##{STORYID_PATTERN}]
+                 $1
+               else
+                 raise "I can't make a PivotalTracker story id from #{c}"
+               end
+    open("https://www.pivotaltracker.com/services/v5/stories/#{story_id}", {'X-TrackerToken' => TOKEN}) do |f|
+      story = JSON(f.read)
+      %Q[Pivotal story: #{story['name']}
+(#{story['current_state']}, #{ story['story_type'] == 'feature' ? story['estimate'] ? "#{story['estimate']} points" : "unestimated" : story['story_type'] })
+https://www.pivotaltracker.com/story/show/#{story_id}/expand]
+    end
+  end
+rescue Exception => e
+  notify("Failed, sorry: #{e.message}")
+end
