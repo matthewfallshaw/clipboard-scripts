@@ -24,7 +24,7 @@ begin
       story = JSON(f.read)
       %Q[Pivotal story: #{story['name']}
 (#{story['current_state']}, #{ story['story_type'] == 'feature' ? story['estimate'] ? "#{story['estimate']} points" : "unestimated" : story['story_type'] })
-https://www.pivotaltracker.com/n/projects/#{story['project_id']}/stories/#{story_id}/expand]
+https://www.pivotaltracker.com/n/projects/#{story['project_id']}/stories/#{story_id}]
     end
   end
 rescue Exception => e
