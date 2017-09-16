@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
-# Clear empty lines & trailing spaces from the clipboard on OSX
+# Clear regex argument (default empty lines & leading or trailing spaces) from the clipboard on OSX
 
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
 
-clipboard {|c| c.gsub(/\s+$/,"").gsub(/^\s+/,"").gsub(/^$\n/,"") }
+if ARGV.empty? then
+  clipboard {|c| c.gsub(/^\s+(.*?)\s+$\n?/,'\1') }
+else
+  clipboard {|c| c.gsub(Regexp.new(ARGV.first),'') }
+end
