@@ -22,12 +22,22 @@ end
 
 def notify(message, sticky = false)
   require 'shellwords'
-  `#{notifyscript}#{sticky ? " -s" : ""} -a 'Quicksilver' -m #{message.to_s.shellescape}`
+  `#{notifyscript(sticky)} #{message.to_s.shellescape}`
   message
 end
 
-def notifyscript
+def notifyscript(sticky = false)
   script = `which growlnotify`.chomp
-  return script unless script.empty?
-  %w[/usr/local/bin/growlnotify /opt/local/bin/growlnotify].find {|path| File.exist?(path) }
+  return "#{script}#{sticky ? " -s" : ""} -a 'Quicksilver' -m" unless script.empty?
+
+  script = %w[/usr/local/bin/growlnotify /opt/local/bin/growlnotify].find {|path| File.exist?(path) }
+  return "#{script}#{sticky ? " -s" : ""} -a 'Quicksilver' -m" unless not script or script.empty?
+
+  lib_dir = nil
+  %w[../lib ./lib].each do |l|
+    lib_dir = "#{File.dirname(File.expand_path(__FILE__))}/#{l}"
+    break if File.directory?(lib_dir)
+  end
+  script = "#{lib_dir}/notify"
+  return script
 end
