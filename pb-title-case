@@ -3,7 +3,8 @@
 
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
+require 'titlecase'
 
 clipboard do |c|
-  c.split("\s").collect {|w| w.capitalize}.join(" ")
+  c.titlecase
 end

@@ -9,7 +9,7 @@ class HumanizingString < String
   end
 
   def humanize
-    self.gsub!(/[_-]/,' ')
+    self.gsub!(/[@_-]/,' ')
     if all_caps?
       super.split("\s").collect {|w| w.capitalize}.join(" ")
     elsif dotty?
