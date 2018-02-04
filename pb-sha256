@@ -1,0 +1,4 @@
+#!/bin/sh
+PATH=/usr/local/bin:/usr/local/bin:/usr/local/opt/coreutils/libexec/gnubin:$PATH
+
+pbpaste | /usr/local/opt/coreutils/libexec/gnubin/sha256sum | cut -d" " -f1 | tr -d "\n" | pbcopy && env growlnotify -a Quicksilver -m "SHA256 sum in clipboard."
