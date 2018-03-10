@@ -1,0 +1,5 @@
+#!/bin/sh
+PATH=/usr/local/bin:/opt/local/bin:$PATH
+
+pbpaste | sed 's/[^0-9]*//g' | pbcopy
+/usr/bin/env growlnotify -a Quicksilver -t "Clipboard non-numbers striped:" -m "`pbpaste`"
