@@ -5,5 +5,5 @@
 require "helper"
 
 clipboard do |c|
-  c.downcase.sub(/^./) {|x| x.upcase }
+  c.downcase.gsub(/^.|\. +./) {|x| x.upcase }
 end
