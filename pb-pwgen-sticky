@@ -3,8 +3,8 @@
 require "helper"
 
 PWGEN_COMMAND = %w[/usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(p) }
-PWGEN_LENGTH = 14
-WORDLIST = `find ~/Documents/wordlist -iname '*common*'`.chomp
+PWGEN_LENGTH = 20
+WORDLIST = `find ~/Documents/wordlist* -iname '*crossword*'`.chomp
 
 def random_word
   line = rand(`wc -l #{WORDLIST} | awk {'print $1'}`.chomp.to_i) + 1
@@ -24,7 +24,7 @@ New password in clipboard.
 
 Other options:
 #{`pwgen #{PWGEN_LENGTH} -N10 | sed 's/^/    /'`}
-#{(1..12).collect {random_word}.join(" ")}
+#{(1..40).collect {random_word}.join(" ")}
 STR
 
 # vi: filetype=ruby
