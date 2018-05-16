@@ -12,6 +12,7 @@ GEM
     minitest (5.10.3)
     samsouder-titlecase (0.1.0)
     thread_safe (0.3.6)
+    titlecase (0.1.1)
     tzinfo (1.2.4)
       thread_safe (~> 0.1)
 
@@ -21,6 +22,7 @@ PLATFORMS
 DEPENDENCIES
   activesupport
   samsouder-titlecase
+  titlecase
 
 BUNDLED WITH
    1.16.0

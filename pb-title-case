@@ -2,7 +2,7 @@
 # Title caserize the contents of the OSX clipboard
 
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+require 'helper'
 require 'titlecase'
 
 clipboard do |c|
