@@ -2,5 +2,5 @@
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
 # remove any special formatting from the contents of the OSX clipboard
-/usr/bin/pbpaste | /usr/bin/pbcopy
+pbpaste | pbcopy
 /usr/bin/env growlnotify -a Quicksilver -t "Clipboard:" -m "`pbpaste`"

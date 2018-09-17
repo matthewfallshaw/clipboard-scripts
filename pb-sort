@@ -2,7 +2,7 @@
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
 if [ $(pbpaste | wc -l) -gt 1 ]; then
-  pbpaste | sort -if | pbcopy;
+  pbpaste | sort -if | pbcopy
 else
   pbpaste | tr , "\n" | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
 fi

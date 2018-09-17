@@ -2,5 +2,5 @@
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
 # clear the clipboard / pasteboard
-/usr/bin/env pbcopy < /dev/null
+pbcopy < /dev/null
 /usr/bin/env growlnotify -a Quicksilver -t "Clipboard cleared"
