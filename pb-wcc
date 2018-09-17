@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # Word count the clipboard on OSX
 
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
+
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
 
