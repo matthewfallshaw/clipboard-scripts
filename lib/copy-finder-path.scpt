@@ -7,3 +7,4 @@ tell application "Finder"
 	if the_paths is not "" then set the_paths to text 1 thru -2 of the_paths
 	set the clipboard to the_paths
 end tell
+
