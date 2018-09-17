@@ -1,0 +1,4 @@
+#!/bin/sh
+PATH=/usr/local/bin:/opt/local/bin:$PATH
+
+pbpaste | sed -En "s/\+[0-9]{1,2} +(.*)/\1/p" | pbcopy && /usr/bin/env growlnotify -a Quicksilver -t "Clipboard:" -m "`pbpaste`"
