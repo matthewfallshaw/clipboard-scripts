@@ -1,7 +1,5 @@
 #!/bin/sh
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
-wongahta=`expr $RANDOM + 1000`
-/bin/echo -n ${wongahta:0:4} | pbcopy
-unset wongahta
+printf '%04d' $(jot -nr 1 0 9999) | pbcopy
 /usr/bin/env growlnotify -a Quicksilver -m "New pin in clipboard."
