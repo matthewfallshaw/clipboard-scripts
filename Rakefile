@@ -32,8 +32,18 @@ Dir["pb-*"].each do |script|
       end
       puts "… and secrets replaced in #{script}"
     end
+    bake_shebangs(script)
     puts
   end
+end
+
+# Quicksilver doesn't set the path properly, bake in the right ruby in shebangs
+def bake_shebangs(script)
+  # ruby = File.expand_path("~/.rbenv/shims/ruby")
+  # if not File.exist?(ruby)
+    ruby = `\which ruby | tr -d '\n'`
+  # end
+  system %[ruby -pi -e 'gsub(%r{#!/usr/bin/env ruby}, "\#!#{ruby}")' "#{File.join(BINDIR, script)}"]
 end
 
 def secrets
