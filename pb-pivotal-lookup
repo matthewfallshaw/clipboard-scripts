@@ -5,7 +5,7 @@
 require 'helper'
 %w[json open-uri].each {|l| require(l) }
 
-TOKEN = 'yourpivotaltoken'
+TOKEN = `security find-generic-password -a clipboard-scripts -s PivotalToken -w`
 STORYID_PATTERN = "(\\d{8,})"
 
 begin
