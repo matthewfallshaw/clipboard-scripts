@@ -1,9 +1,15 @@
 #!/usr/bin/env ruby -w
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+# frozen_string_literal: true
 
-system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
+%w[../lib ./lib].each { |l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
+require 'helper'
+
+system("osascript #{File.expand_path(File.join(File.dirname(__FILE__),
+                                               '../lib/copy-finder-path.scpt'))}")
 clipboard do |c|
-  c.gsub(/\/Users\/.*?\//, '~/').gsub(/~\/Dropbox( \([^)]+?\))?\//, 'Dropbox:').gsub(/~\/Google Drive( \([^)]+?\))?\//, 'Google Drive:')
+  c.gsub(%r{/Users/.*?/}, '~/')
+   .gsub(%r{~/Dropbox( \([^)]+?\))?/}, 'Dropbox:')
+   .gsub(%r{~/Google Drive( \([^)]+?\))?/}, 'Google Drive:')
+   .gsub(%r{/Volumes/GoogleDrive/}, 'Google Drive:')
 end
