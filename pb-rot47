@@ -1,0 +1,5 @@
+#!/bin/bash
+PATH=/usr/local/bin:/opt/local/bin:$PATH
+
+pbpaste | tr '\!-~' 'P-~\!-O' | pbcopy
+/usr/bin/env growlnotify -a Quicksilver -t "ROT47:" -m "`pbpaste`"
