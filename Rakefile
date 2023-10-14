@@ -3,7 +3,7 @@
 BINDIR = File.expand_path(File.join(File.dirname(__FILE__), "bin"))
 SOURCEDIR = File.expand_path(File.dirname(__FILE__))
 SECRETS = File.expand_path('~/.dotfiles_secrets')
- 
+
 task :default => :install
 
 desc "Install clipboard scripts to #{BINDIR}
@@ -32,7 +32,7 @@ Dir["pb-*"].each do |script|
       end
       puts "… and secrets replaced in #{script}"
     end
-    bake_shebangs(script)
+    # bake_shebangs(script)
     puts
   end
 end
@@ -41,7 +41,7 @@ end
 def bake_shebangs(script)
   # ruby = File.expand_path("~/.rbenv/shims/ruby")
   # if not File.exist?(ruby)
-    ruby = `\which ruby | tr -d '\n'`
+    ruby = `command which ruby | tr -d '\n'`
   # end
   system %[ruby -pi -e 'gsub(%r{#!/usr/bin/env ruby}, "\#!#{ruby}")' "#{File.join(BINDIR, script)}"]
 end

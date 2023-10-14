@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import subprocess
+import unittest
+import sys
+
+def fix_nested_quotes(text: str) -> str:
+    inner_text = text[1:-1] if text.startswith('"') and text.endswith('"') else text
+    inner_text = inner_text.replace('"', "'")
+    return '"' + inner_text + '"'
+
+
+class TestFixNestedQuotes(unittest.TestCase):
+    def test_unquoted_string(self) -> None:
+        self.assertEqual(fix_nested_quotes('An "unquoted" string'), '"An \'unquoted\' string"')
+
+    def test_already_fixed_string(self) -> None:
+        self.assertEqual(fix_nested_quotes('"An \'unquoted\' string"'), '"An \'unquoted\' string"')
+
+    def test_nested_quotes(self) -> None:
+        self.assertEqual(fix_nested_quotes('"An "unquoted" string"'), '"An \'unquoted\' string"')
+
+    def test_multiple_nested_quotes(self) -> None:
+        self.assertEqual(fix_nested_quotes('James said "hello", then he said "goodbye".'), '"James said \'hello\', then he said \'goodbye\'."')
+
+    def test_deep_nesting(self) -> None:
+        self.assertEqual(fix_nested_quotes('James said "Dave said \'Deep nesting is awesome!\', with an annoyingly wry grin on his face", with his own annoyingly wry grin.'),
+                         '"James said \'Dave said \'Deep nesting is awesome!\', with an annoyingly wry grin on his face\', with his own annoyingly wry grin."')
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        # Run unit tests if any argument is provided
+        unittest.main(argv=[sys.argv[0]])  # Strip script arguments, leave unittest argv[0]
+    else:
+        clipboard_content: str = subprocess.getoutput('pbpaste')
+        fixed_content: str = fix_nested_quotes(clipboard_content)
+        subprocess.run('pbcopy', universal_newlines=True, input=fixed_content)
