@@ -11,5 +11,5 @@ clipboard do |c|
   c.gsub(%r{/Users/.*?/}, '~/')
    .gsub(%r{~/Dropbox( \([^)]+?\))?/}, 'Dropbox:')
    .gsub(%r{~/Google Drive( \([^)]+?\))?/}, 'Google Drive:')
-   .gsub(%r{/Volumes/GoogleDrive/}, 'Google Drive:')
+   .gsub(%r{/Volumes/GoogleDrive(-\d+)?/}, 'Google Drive:')
 end
