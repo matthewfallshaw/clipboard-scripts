@@ -2,7 +2,7 @@
 %w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
 require "helper"
 
-PWGEN_COMMAND = %w[/usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(p) }
+PWGEN_COMMAND = %w[~/.nix-profile/bin/pwgen /usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(File.expand_path(p)) }
 PWGEN_LENGTH = 20
 
 # put a new pw in the clipboard without looking at it

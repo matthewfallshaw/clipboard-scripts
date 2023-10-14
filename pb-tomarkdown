@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+/usr/local/bin/clipdown
+/usr/bin/env growlnotify -a Quicksilver -t "clipdown:" -m "`pbpaste`"
