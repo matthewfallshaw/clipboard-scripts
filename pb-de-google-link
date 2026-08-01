@@ -1,17 +1,55 @@
-#!/usr/bin/env ruby
-# decode Google search links to get destination url
+#!/usr/bin/env python3
+"""Extract the destination URL from a Google search redirect link."""
 
-GOOGLE_LINK_RE = %q[https?://www.google.com(?:\...)?/url\?.*(?:url|q)=(https?(?:%3A%2F%2F|://)[^&]+)]
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import die, paste, transform  # noqa: E402
+
 # https://www.google.com/url?q=http://lesswrong.com/lw/jg/planning_fallacy/&sa=U&ei=G6ulUf-LComYqAHbuIDQCQ&ved=0CAcQFjAA&client=internal-uds-cse&usg=AFQjCNFnb1OtVL1uuIiuvTnjaqOaqsraxQ
 # https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CDAQFjAA&url=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FPlanning_fallacy&ei=_qulUbTqOMmCiQfbx4CYCw&usg=AFQjCNGFtR1K-hSLR-8aeW0EowOGhDcuSQ&sig2=NXIWMQfEp9nMCDLgSwLuTw&bvm=bv.47008514,d.aGc
 # https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwiZsbLPsdzJAhWDIqYKHZhLBqgQFgglMAA&url=https%3A%2F%2Fwww.givedirectly.org%2F&usg=AFQjCNFSnkTpUyRj51TbStjpwPw_dRa3aQ&sig2=ReCY5wIG7CbCuYM_ajaJtA
+GOOGLE_LINK_RE = re.compile(
+    r"https?://www\.google\.com(?:\...)?/url\?.*(?:url|q)="
+    r"(https?(?:%3A%2F%2F|://)[^&]+)"
+)
 
-require 'uri'
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
 
-if clipboard.match(Regexp.new(GOOGLE_LINK_RE))
-  clipboard { URI.decode($1) }
-else
-  notify("That doesn't look like a Google search URL.")
-end
+def is_google_link(text: str) -> bool:
+    """True if `text` looks like a Google search redirect URL."""
+    return GOOGLE_LINK_RE.search(text) is not None
+
+
+def de_google_link(text: str) -> str:
+    """Extract the destination URL from a Google redirect link.
+
+    Prefers parsing the query string for a `url` or `q` parameter (robust
+    against extra params and the order they appear in); falls back to the
+    original regex extraction if the query string doesn't yield one.
+    """
+    text = text.strip()
+
+    query = parse_qs(urlparse(text).query)
+    for key in ("url", "q"):
+        for value in query.get(key, []):
+            if value.startswith(("http://", "https://")):
+                return value
+
+    match = GOOGLE_LINK_RE.search(text)
+    if match:
+        return unquote(match.group(1))
+
+    return text
+
+
+if __name__ == "__main__":
+    if is_google_link(paste()):
+        transform(de_google_link)
+    else:
+        die("That doesn't look like a Google search URL.")

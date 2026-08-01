@@ -1,13 +1,22 @@
-#!/usr/bin/env ruby
-# ROT13 the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""ROT13 the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-class String
-  def rot13
-    self.tr('a-zA-Z','n-za-mN-ZA-M')
-  end
-end
+import codecs
+import sys
+from pathlib import Path
 
-clipboard(true) {|c| c.rot13 }
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def rot13(text: str) -> str:
+    """Rotate ASCII letters by 13 places; everything else is untouched."""
+    return codecs.encode(text, "rot13")
+
+
+if __name__ == "__main__":
+    # The old Ruby used a sticky notification (`clipboard(true) { ... }`).
+    transform(rot13, sticky=True)

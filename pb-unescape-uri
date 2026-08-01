@@ -1,10 +1,21 @@
-#!/usr/bin/env ruby
-# URI unescape the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""URI-unescape (percent-decode) the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require 'uri'
+from __future__ import annotations
 
-clipboard do |c|
-  URI.unescape(c)
-end
+import sys
+import urllib.parse
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def unescape_uri(text: str) -> str:
+    """Percent-decode text, matching the old Ruby `URI.unescape`."""
+    return urllib.parse.unquote(text)
+
+
+if __name__ == "__main__":
+    transform(unescape_uri)

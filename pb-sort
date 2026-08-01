@@ -1,10 +1,41 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/usr/bin/env python3
+"""Sort the clipboard.
 
-num_lines="$(pbpaste | wc -l | tr -d '[:space:]')"
-if [ "${num_lines:-0}" -gt 1 ]; then
-  pbpaste | sort -if | pbcopy
-else
-  pbpaste | tr ',' '\n' | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
-fi
-/usr/bin/env growlnotify -a Quicksilver -t "Sorted:" -m "$(pbpaste)"
+Multi-line lists (more than one line) sort by line. Single-line lists are
+treated as a comma-separated list: split on commas, sorted, and rejoined.
+Sorting is case-insensitive and ignores a single leading space per item
+(matching the previous shell implementation's `sort -if`).
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import List
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def _sort_key(item: str) -> str:
+    """Case-insensitive sort key that ignores leading blanks."""
+    return item.lstrip().casefold()
+
+
+def sort_list(text: str) -> str:
+    """Sort clipboard text as a multi-line list, or a single-line comma list."""
+    if not text:
+        return text
+
+    if text.count("\n") > 1:
+        lines: List[str] = text.splitlines()
+        return "\n".join(sorted(lines, key=_sort_key)) + "\n"
+
+    items: List[str] = text.replace(",", "\n").splitlines()
+    items = [item[1:] if item.startswith(" ") else item for item in items]
+    return ",".join(sorted(items, key=_sort_key)) + "\n"
+
+
+if __name__ == "__main__":
+    transform(sort_list)

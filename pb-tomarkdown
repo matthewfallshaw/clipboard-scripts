@@ -1,4 +1,314 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+"""Convert rich text (HTML) on the clipboard to Markdown."""
 
-/usr/local/bin/clipdown
-/usr/bin/env growlnotify -a Quicksilver -t "clipdown:" -m "`pbpaste`"
+from __future__ import annotations
+
+import html
+import re
+import subprocess
+import sys
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import List, Optional, Union
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import copy, notify, osascript, paste  # noqa: E402
+
+# Tags with no content and no closing tag.
+_VOID_TAGS = frozenset(
+    {"br", "hr", "img", "input", "meta", "link", "area", "base", "col", "embed"}
+)
+
+# Block-level tags: rendering starts them on a fresh line and separates
+# consecutive blocks with a blank line.
+_BLOCK_TAGS = frozenset(
+    {
+        "p",
+        "div",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "pre",
+        "table",
+        "hr",
+    }
+)
+
+_HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
+
+# Characters that would otherwise be read as Markdown syntax.
+_ESCAPE_RE = re.compile(r"([\\`*_\[\]#])")
+
+
+class _Node:
+    """A minimal DOM node: a tag with attributes and mixed str/_Node children."""
+
+    def __init__(self, tag: str, attrs: Optional[List[tuple]] = None) -> None:
+        self.tag: str = tag
+        self.attrs: dict = dict(attrs or [])
+        self.children: List[Union[str, "_Node"]] = []
+
+
+class _TreeBuilder(HTMLParser):
+    """Builds a `_Node` tree from HTML, tolerating unclosed/mismatched tags."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.root = _Node("root")
+        self.stack: List[_Node] = [self.root]
+
+    def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:
+        node = _Node(tag, attrs)
+        self.stack[-1].children.append(node)
+        if tag not in _VOID_TAGS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag: str, attrs: List[tuple]) -> None:
+        self.stack[-1].children.append(_Node(tag, attrs))
+
+    def handle_endtag(self, tag: str) -> None:
+        for i in range(len(self.stack) - 1, 0, -1):
+            if self.stack[i].tag == tag:
+                del self.stack[i:]
+                return
+        # Unmatched end tag (malformed HTML) - ignore rather than raise.
+
+    def handle_data(self, data: str) -> None:
+        self.stack[-1].children.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        self.stack[-1].children.append(html.unescape("&%s;" % name))
+
+    def handle_charref(self, name: str) -> None:
+        self.stack[-1].children.append(html.unescape("&#%s;" % name))
+
+
+def _collapse_ws(text: str) -> str:
+    """Collapse runs of HTML whitespace to a single space, per HTML rendering rules."""
+    return re.sub(r"[ \t\r\n]+", " ", text)
+
+
+def _escape(text: str) -> str:
+    """Escape characters Markdown would otherwise interpret as syntax."""
+    return _ESCAPE_RE.sub(r"\\\1", text)
+
+
+def _render_inline(node: Union[str, _Node]) -> str:
+    """Render a node (and its descendants) as inline Markdown text."""
+    if isinstance(node, str):
+        return _escape(_collapse_ws(node))
+
+    tag = node.tag
+    inner = "".join(_render_inline(child) for child in node.children)
+
+    if tag in ("b", "strong"):
+        return "**%s**" % inner if inner.strip() else inner
+    if tag in ("i", "em"):
+        return "_%s_" % inner if inner.strip() else inner
+    if tag in ("s", "strike", "del"):
+        return "~~%s~~" % inner if inner.strip() else inner
+    if tag == "code":
+        raw = _render_text_only(node)
+        return "`%s`" % raw
+    if tag == "a":
+        href = node.attrs.get("href", "")
+        if not href:
+            return inner
+        return "[%s](%s)" % (inner, href)
+    if tag == "img":
+        alt = node.attrs.get("alt", "")
+        src = node.attrs.get("src", "")
+        return "![%s](%s)" % (alt, src)
+    if tag == "br":
+        return "  \n"
+    # Unknown inline tag: pass its rendered content through unchanged.
+    return inner
+
+
+def _render_text_only(node: _Node) -> str:
+    """Concatenate descendant text with HTML whitespace collapsed, unescaped."""
+    parts: List[str] = []
+    for child in node.children:
+        if isinstance(child, str):
+            parts.append(_collapse_ws(child))
+        else:
+            parts.append(_render_text_only(child))
+    return "".join(parts).strip()
+
+
+def _render_verbatim(node: _Node) -> str:
+    """Concatenate descendant text exactly as written, without collapsing whitespace."""
+    parts: List[str] = []
+    for child in node.children:
+        if isinstance(child, str):
+            parts.append(child)
+        elif child.tag == "br":
+            parts.append("\n")
+        else:
+            parts.append(_render_verbatim(child))
+    return "".join(parts)
+
+
+def _render_list(node: _Node, depth: int) -> str:
+    ordered = node.tag == "ol"
+    indent = "  " * depth
+    lines: List[str] = []
+    index = 1
+    for child in node.children:
+        if isinstance(child, str) or child.tag != "li":
+            continue
+        marker = "%d." % index if ordered else "-"
+        index += 1
+        block_children = [
+            c for c in child.children if not isinstance(c, str) and c.tag in ("ul", "ol")
+        ]
+        inline_children = [
+            c for c in child.children if isinstance(c, str) or c.tag not in ("ul", "ol")
+        ]
+        text = "".join(_render_inline(c) for c in inline_children).strip()
+        lines.append("%s%s %s" % (indent, marker, text))
+        for nested in block_children:
+            lines.append(_render_list(nested, depth + 1).rstrip("\n"))
+    return "\n".join(lines) + "\n"
+
+
+def _render_table(node: _Node) -> str:
+    rows: List[List[str]] = []
+
+    def _cells(row: _Node) -> List[str]:
+        cells = []
+        for cell in row.children:
+            if isinstance(cell, str) or cell.tag not in ("td", "th"):
+                continue
+            cells.append("".join(_render_inline(c) for c in cell.children).strip())
+        return cells
+
+    def _walk(n: _Node) -> None:
+        for child in n.children:
+            if isinstance(child, str):
+                continue
+            if child.tag == "tr":
+                rows.append(_cells(child))
+            elif child.tag in ("thead", "tbody", "tfoot"):
+                _walk(child)
+
+    _walk(node)
+    if not rows:
+        return ""
+
+    width = max(len(r) for r in rows)
+    rows = [r + [""] * (width - len(r)) for r in rows]
+
+    lines = ["| " + " | ".join(rows[0]) + " |", "| " + " | ".join(["---"] * width) + " |"]
+    for row in rows[1:]:
+        lines.append("| " + " | ".join(row) + " |")
+    return "\n".join(lines) + "\n"
+
+
+def _render_block(node: _Node) -> List[str]:
+    """Render a node's block-level children to a list of Markdown blocks."""
+    blocks: List[str] = []
+    buffer: List[Union[str, _Node]] = []
+
+    def flush_inline() -> None:
+        if not buffer:
+            return
+        text = "".join(_render_inline(c) for c in buffer).strip()
+        buffer.clear()
+        if text:
+            blocks.append(text)
+
+    for child in node.children:
+        if isinstance(child, str):
+            if child.strip():
+                buffer.append(child)
+            continue
+
+        tag = child.tag
+        if tag not in _BLOCK_TAGS:
+            buffer.append(child)
+            continue
+
+        flush_inline()
+
+        if tag in _HEADING_TAGS:
+            level = int(tag[1])
+            text = "".join(_render_inline(c) for c in child.children).strip()
+            blocks.append("%s %s" % ("#" * level, text))
+        elif tag in ("p", "div"):
+            has_block_child = any(
+                not isinstance(c, str) and c.tag in _BLOCK_TAGS for c in child.children
+            )
+            if has_block_child:
+                blocks.extend(_render_block(child))
+            else:
+                text = "".join(_render_inline(c) for c in child.children).strip()
+                if text:
+                    blocks.append(text)
+        elif tag in ("ul", "ol"):
+            blocks.append(_render_list(child, 0).rstrip("\n"))
+        elif tag == "blockquote":
+            inner_blocks = _render_block(child)
+            quoted = "\n\n".join(inner_blocks)
+            blocks.append(
+                "\n".join("> " + line if line else ">" for line in quoted.split("\n"))
+            )
+        elif tag == "pre":
+            code_node = None
+            for c in child.children:
+                if not isinstance(c, str) and c.tag == "code":
+                    code_node = c
+                    break
+            raw = _render_verbatim(code_node if code_node is not None else child).strip("\n")
+            blocks.append("```\n%s\n```" % raw)
+        elif tag == "table":
+            blocks.append(_render_table(child).rstrip("\n"))
+        elif tag == "hr":
+            blocks.append("---")
+        elif tag == "li":
+            # Stray <li> outside a list container - treat like a paragraph.
+            blocks.extend(_render_block(child))
+
+    flush_inline()
+    return blocks
+
+
+def html_to_markdown(source: str) -> str:
+    """Convert an HTML fragment to Markdown text."""
+    builder = _TreeBuilder()
+    builder.feed(source)
+    builder.close()
+    blocks = _render_block(builder.root)
+    return "\n\n".join(b for b in blocks if b).strip() + "\n"
+
+
+def clipboard_html() -> Optional[str]:
+    """Return the pasteboard's HTML flavour, or None if it doesn't have one."""
+    info = osascript("clipboard info")
+    if "HTML" not in info:
+        return None
+    return subprocess.run(
+        ["/usr/bin/pbpaste", "-Prefer", "public.html"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+
+
+if __name__ == "__main__":
+    source_html = clipboard_html()
+    if source_html is None:
+        # No rich text on the pasteboard - nothing to convert.
+        notify(paste())
+    else:
+        markdown = html_to_markdown(source_html)
+        copy(markdown)
+        notify(markdown)

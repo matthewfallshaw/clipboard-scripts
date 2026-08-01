@@ -1,11 +1,21 @@
-#!/usr/bin/env ruby
-# HTML encode the contents of the OSX clipboard
-# WARNING: this pretty much doesn't work - I guess that pbcopy isn't cooperating
+#!/usr/bin/env python3
+"""HTML-unescape the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-%w[rubygems htmlentities].each {|l| require l }
+from __future__ import annotations
 
-clipboard do |c|
-  HTMLEntities.new.decode(c)
-end
+import html
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def unescape_html(text: str) -> str:
+    """Convert HTML entities (named and numeric) back to plain characters."""
+    return html.unescape(text)
+
+
+if __name__ == "__main__":
+    transform(unescape_html)

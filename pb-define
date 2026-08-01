@@ -1,2 +1,25 @@
-#!/bin/sh
-open dict:///"`pbpaste`"
+#!/usr/bin/env python3
+"""Look up the clipboard contents in Dictionary.app via a dict:// URL."""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import quote
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import die, paste  # noqa: E402
+
+
+def dict_url(term: str) -> str:
+    """Build a dict:// URL for the given (stripped, percent-encoded) term."""
+    return f"dict:///{quote(term.strip(), safe='')}"
+
+
+if __name__ == "__main__":
+    clipboard = paste()
+    if not clipboard.strip():
+        die("Clipboard is empty; nothing to look up.")
+    subprocess.run(["/usr/bin/open", dict_url(clipboard)], check=True)

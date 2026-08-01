@@ -1,24 +1,52 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env python3
+"""Open a Terminal running vidir in the Finder-selected directory."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
-c = clipboard
-finder_path = c.split.first
-if File.exist?(finder_path)
-  if File.directory?(finder_path)
-    # happy
-  else
-    finder_path = File.dirname(finder_path)
-  end
+import os
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+from typing import Optional
 
-  system("osascript <<-END
-tell application \"Terminal\"
-	do script \"vidir /Users/matt/code/clipboard-scripts/bin/\"
-	activate
-end tell
-         END")
-else
-  notify "You'll need to select a directory in Finder, then I can vimdir it for you."
-end
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import LIB_DIR, notify, osascript, paste, require_binary  # noqa: E402
+
+FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
+
+TERMINAL_SCRIPT = """\
+on run argv
+    tell application "Terminal"
+        do script (item 1 of argv)
+        activate
+    end tell
+end run
+"""
+
+
+def target_directory(finder_path: str) -> Optional[str]:
+    """Pick the directory to vidir: the selected path, or its parent if it's a file.
+
+    Returns None if `finder_path` doesn't exist (e.g. nothing was selected).
+    """
+    if not finder_path or not os.path.exists(finder_path):
+        return None
+    if os.path.isdir(finder_path):
+        return finder_path
+    return os.path.dirname(finder_path)
+
+
+if __name__ == "__main__":
+    # copy-finder-path.scpt sets the clipboard to the Finder selection's path(s).
+    subprocess.run(["/usr/bin/osascript", str(FINDER_SCRIPT)], check=True)
+    tokens = paste().split()
+    directory = target_directory(tokens[0] if tokens else "")
+    if directory is None:
+        notify("You'll need to select a directory in Finder, then I can vidir it for you.")
+        sys.exit(0)
+
+    vidir = require_binary("vidir")
+    command = "%s %s" % (shlex.quote(vidir), shlex.quote(directory))
+    osascript(TERMINAL_SCRIPT, [command])

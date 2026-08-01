@@ -1,16 +1,31 @@
-#!/usr/bin/env ruby
-# Quoted-printable unescape the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""Quoted-printable-encode the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-class String
-  def to_quoted_printable(*args)
-    [self].pack("M").gsub(/\n/, "\r\n")
-  end
-  def from_quoted_printable
-    self.gsub(/\r\n/, "\n").unpack("M").first
-  end
-end
+import quopri
+import sys
+from pathlib import Path
 
-clipboard {|c| c.to_quoted_printable }
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def escape_quoted_printable(text: str) -> str:
+    """Quoted-printable-encode text, with CRLF line endings.
+
+    Matches the old Ruby `[text].pack("M").gsub(/\\n/, "\\r\\n")`: soft line
+    breaks every 76 columns (RFC 2045), CRLF terminators. `quopri` only emits a
+    soft break where one is actually needed to stay under the line-length
+    limit; Ruby's `pack("M")` always appends a trailing `=\\r\\n` even for short
+    input. Both round-trip correctly through `unpack("M")`/`quopri.decodestring`,
+    so the extra trailing break is dropped as a harmless simplification, not a
+    correctness fix.
+    """
+    encoded: bytes = quopri.encodestring(text.encode("utf-8"))
+    return encoded.replace(b"\n", b"\r\n").decode("ascii")
+
+
+if __name__ == "__main__":
+    transform(escape_quoted_printable)

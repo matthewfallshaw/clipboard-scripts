@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Install the pb-* scripts into ./bin, for launchers (Quicksilver, Alfred) and $PATH.
+
+Entries are symlinks, not copies, so an installed script can never drift from
+its source. ``bin`` is rebuilt from scratch on each run: anything in there that
+isn't a link to a current ``pb-*`` script is removed.
+
+    ./install            install
+    ./install --dry-run  report what would change
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import stat
+import sys
+from pathlib import Path
+
+REPO_DIR: Path = Path(__file__).resolve().parent
+BIN_DIR: Path = REPO_DIR / "bin"
+
+
+def scripts() -> "list[Path]":
+    """Every installable script: the pb-* files in the repo root."""
+    return sorted(p for p in REPO_DIR.glob("pb-*") if p.is_file() or p.is_symlink())
+
+
+def make_executable(path: Path) -> None:
+    """Add the user execute bit, leaving the rest of the mode alone."""
+    mode = path.stat().st_mode
+    path.chmod(mode | stat.S_IXUSR)
+
+
+def install(dry_run: bool = False) -> int:
+    wanted = {p.name: p for p in scripts()}
+    if not dry_run:
+        BIN_DIR.mkdir(exist_ok=True)
+
+    removed = 0
+    if BIN_DIR.is_dir():
+        for entry in sorted(BIN_DIR.iterdir()):
+            if entry.name in wanted and entry.is_symlink():
+                continue
+            print(f"  - {entry.name}")
+            removed += 1
+            if not dry_run:
+                entry.unlink()
+
+    linked = 0
+    for name, source in wanted.items():
+        link = BIN_DIR / name
+        target = Path("..") / name
+        if link.is_symlink() and os.readlink(link) == str(target):
+            continue
+        print(f"  + {name}")
+        linked += 1
+        if not dry_run:
+            link.symlink_to(target)
+
+    if not dry_run:
+        for source in wanted.values():
+            make_executable(source)
+
+    verb = "would remove" if dry_run else "removed"
+    print(f"{len(wanted)} scripts in {BIN_DIR} ({verb} {removed}, linked {linked})")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dry-run", action="store_true", help="report changes without making them"
+    )
+    return install(**vars(parser.parse_args()))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

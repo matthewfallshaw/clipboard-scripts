@@ -1,41 +1,84 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env python3
+"""Open a Finder-selected (or newly named) file as a new MacVim buffer."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-dialog_text = "Filename for new Vim buffer"
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Callable, Tuple
 
-finder_path = `/usr/bin/osascript <<END
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import osascript, require_binary  # noqa: E402
+
+NEW_FILE_PROMPT = "Filename for new Vim buffer"
+OPEN_FILE_PROMPT = "Open file in Vim (change to open a new file)"
+
+FINDER_SELECTION_SCRIPT = """\
 tell application "Finder"
-	set sel to the selection as text
-	return POSIX path of sel
+    set sel to the selection as text
+    return POSIX path of sel
 end tell
-END`.chomp
-if File.exist?(finder_path)
-  if File.directory?(finder_path)
-    finder_path = File.join(finder_path, "readme.txt")
-  elsif `file "#{finder_path}"`.chomp.match(/text/).nil?
-    finder_path = File.join(File.dirname(finder_path), "readme.txt")
-  else
-    # happy to use that file
-    dialog_text = "Open file in Vim (change to open a new file)"
-  end
-else
-  finder_path = File.expand_path("/tmp/tempfile.txt")
-end
+"""
 
-file_name = `/usr/bin/osascript <<-'__HEREDOC__'
-with timeout of 300 seconds
-  tell application (path to frontmost application as text)
-    activate
-    set input to display dialog "#{dialog_text}:" with title "Filename" with icon note default answer "#{finder_path}" buttons {"Cancel", "OK"} default button 2 giving up after 295
-    return text returned of input as string
-  end tell
-end timeout
-  __HEREDOC__`.chomp
-exit 0 if file_name.empty?
+DIALOG_SCRIPT = """\
+on run argv
+    set dlgText to item 1 of argv
+    set defaultAnswer to item 2 of argv
+    with timeout of 300 seconds
+        tell application (path to frontmost application as text)
+            activate
+            set input to display dialog (dlgText & ":") with title "Filename" ¬
+                with icon note default answer defaultAnswer ¬
+                buttons {"Cancel", "OK"} default button 2 giving up after 295
+            return text returned of input as string
+        end tell
+    end timeout
+end run
+"""
 
-# Spawn mvim & detatch
-pid = Process.spawn("mvim '#{file_name}'") 
-Process.detach pid
-exit 0
+
+def is_text_file(path: str) -> bool:
+    """True if the `file` command reports text content for `path`."""
+    result = subprocess.run(
+        ["/usr/bin/file", path], capture_output=True, text=True, check=True
+    )
+    return "text" in result.stdout
+
+
+def choose_target(finder_path: str, is_text: Callable[[str], bool]) -> Tuple[str, str]:
+    """Decide which file to open and what to prompt for, given a Finder path.
+
+    Returns (path, dialog_text):
+    - nothing selected (or it no longer exists) -> /tmp/tempfile.txt
+    - a directory -> readme.txt inside it
+    - a non-text file -> readme.txt alongside it
+    - a text file -> that file, with a dialog inviting a different name
+    """
+    if not finder_path or not os.path.exists(finder_path):
+        return ("/tmp/tempfile.txt", NEW_FILE_PROMPT)
+    if os.path.isdir(finder_path):
+        return (os.path.join(finder_path, "readme.txt"), NEW_FILE_PROMPT)
+    if not is_text(finder_path):
+        return (os.path.join(os.path.dirname(finder_path), "readme.txt"), NEW_FILE_PROMPT)
+    return (finder_path, OPEN_FILE_PROMPT)
+
+
+if __name__ == "__main__":
+    finder_path = osascript(FINDER_SELECTION_SCRIPT)
+    target_path, dialog_text = choose_target(finder_path, is_text_file)
+
+    file_name = osascript(DIALOG_SCRIPT, [dialog_text, target_path])
+    if not file_name:
+        sys.exit(0)
+
+    mvim = require_binary("mvim")
+    subprocess.Popen(
+        [mvim, file_name],
+        start_new_session=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )

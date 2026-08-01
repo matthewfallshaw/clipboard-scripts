@@ -1,8 +1,27 @@
-#!/usr/bin/env ruby
-# URI escape the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""URI-escape (percent-encode) the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require 'uri'
+from __future__ import annotations
 
-clipboard {|c| URI.escape(c) }
+import sys
+import urllib.parse
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+# Ruby's `URI.escape`/`URI.encode` (removed in modern Ruby) left alphanumerics,
+# the unreserved "mark" characters `-_.!~*'()`, and the URI reserved characters
+# `;/?:@&=+$,[]#` unescaped, percent-encoding everything else. `quote()` always
+# leaves alphanumerics alone, so `safe` only needs the rest of that set.
+URI_SAFE_CHARS: str = "-_.!~*'()" + ";/?:@&=+$,[]#"
+
+
+def escape_uri(text: str) -> str:
+    """Percent-encode text, matching the old Ruby `URI.escape` default safe set."""
+    return urllib.parse.quote(text, safe=URI_SAFE_CHARS)
+
+
+if __name__ == "__main__":
+    transform(escape_uri)

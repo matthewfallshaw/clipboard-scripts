@@ -1,35 +1,114 @@
-#!/usr/bin/env ruby
-# decode links to get destination url
+#!/usr/bin/env python3
+"""Follow HTTP redirects on the clipboard to find a link's final destination."""
 
-require 'uri'
-require 'net/http'
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-@loop_detector = []
+import sys
+from pathlib import Path
+from typing import Callable, Optional, Set, Tuple
+from urllib.error import HTTPError, URLError
+from urllib.parse import urljoin
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-def fetch(uri)
-  if @loop_detector.include?(uri)
-    notify "We're looping; something's wrong. Try this one anyway…"
-    return uri
-  end
-  @loop_detector << uri
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-  u = URI.parse(uri)
-  c = Net::HTTP.new(u.host)
-  h = c.head("#{u.path}?#{u.query}")
-  case h
-  when Net::HTTPSuccess then u.to_s
-  when Net::HTTPRedirection then fetch(h['location'])
-  else
-    h.error!
-  end
-end
+from pbclip import die, notify, paste, transform  # noqa: E402
 
-if clipboard.match(Regexp.new(%q[^http]))
-  clipboard do |c|
-    fetch(c)
-  end
-else
-  notify("That doesn't look like a URL.")
-end
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+)
+TIMEOUT_SECONDS = 10
+MAX_HOPS = 10
+
+# (status_code, Location header or None) for a single hop.
+Fetcher = Callable[[str], Tuple[int, Optional[str]]]
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    """Stop urllib auto-following redirects so we can inspect each hop."""
+
+    def redirect_request(  # type: ignore[override]
+        self, req: Request, fp: object, code: int, msg: str, headers: object, newurl: str
+    ) -> Optional[Request]:
+        return None
+
+
+_opener = build_opener(_NoRedirect())
+
+
+def fetch_headers(url: str, timeout: int = TIMEOUT_SECONDS) -> Tuple[int, Optional[str]]:
+    """Perform one HTTP hop and return (status_code, Location header).
+
+    Tries HEAD first; falls back to GET if the server rejects HEAD with a
+    405 (common with shorteners). Uses the URL's own scheme and port -
+    unlike the old Ruby, which always spoke plain HTTP on port 80 even for
+    https:// URLs.
+    """
+    last_error: Optional[HTTPError] = None
+    for method in ("HEAD", "GET"):
+        request = Request(url, method=method, headers={"User-Agent": USER_AGENT})
+        try:
+            with _opener.open(request, timeout=timeout) as response:
+                return response.status, response.headers.get("Location")
+        except HTTPError as exc:
+            if method == "HEAD" and exc.code == 405:
+                last_error = exc
+                continue
+            return exc.code, (exc.headers.get("Location") if exc.headers else None)
+    assert last_error is not None
+    return last_error.code, (
+        last_error.headers.get("Location") if last_error.headers else None
+    )
+
+
+def is_url(text: str) -> bool:
+    """True if `text` looks like an http(s) URL."""
+    return text.strip().startswith(("http://", "https://"))
+
+
+def follow_redirects(
+    url: str, fetch: Fetcher = fetch_headers, max_hops: int = MAX_HOPS
+) -> str:
+    """Follow redirects from `url` to its final destination.
+
+    `fetch` is injectable for testing: given a URL, it returns
+    (status_code, Location header or None) for a single hop. Stops (and
+    notifies) on a repeated URL - a redirect loop - or after `max_hops`
+    hops, and on a network error, returning the best URL found so far.
+    """
+    seen: Set[str] = set()
+    current = url
+
+    for _ in range(max_hops):
+        if current in seen:
+            notify("We're looping; something's wrong. Try this one anyway…")
+            return current
+        seen.add(current)
+
+        try:
+            status, location = fetch(current)
+        except URLError as exc:
+            notify(f"Couldn't reach {current} ({exc.reason}). Try this one anyway…")
+            return current
+
+        if 300 <= status < 400 and location:
+            current = urljoin(current, location)
+            continue
+
+        return current
+
+    notify(f"Gave up after {max_hops} redirects. Try this one anyway…")
+    return current
+
+
+def de_redirect_link(text: str) -> str:
+    """Resolve the clipboard URL to its final redirect destination."""
+    return follow_redirects(text.strip())
+
+
+if __name__ == "__main__":
+    if is_url(paste()):
+        transform(de_redirect_link)
+    else:
+        die("That doesn't look like a URL.")

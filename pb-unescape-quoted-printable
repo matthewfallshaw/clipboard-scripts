@@ -1,18 +1,28 @@
-#!/usr/bin/env ruby
-# Quoted-printable unescape the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""Quoted-printable-decode the contents of the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-class String
-  def to_quoted_printable(*args)
-    [self].pack("M").gsub(/\n/, "\r\n")
-  end
-  def from_quoted_printable
-    self.gsub(/\r\n/, "\n").unpack("M").first
-  end
-end
+import quopri
+import sys
+from pathlib import Path
 
-clipboard do |c|
-  c.from_quoted_printable
-end
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def unescape_quoted_printable(text: str) -> str:
+    """Decode quoted-printable text back to plain text.
+
+    Matches the old Ruby `text.gsub(/\\r\\n/, "\\n").unpack("M").first`: CRLF
+    line endings are normalized to LF, then quoted-printable soft breaks and
+    `=XX` escapes are decoded.
+    """
+    normalized: str = text.replace("\r\n", "\n")
+    decoded: bytes = quopri.decodestring(normalized.encode("ascii"))
+    return decoded.decode("utf-8")
+
+
+if __name__ == "__main__":
+    transform(unescape_quoted_printable)

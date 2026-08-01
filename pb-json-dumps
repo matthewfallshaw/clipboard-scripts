@@ -1,9 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env python3
+"""JSON-encode the contents of the clipboard on macOS."""
 
-# Read from clipboard
-CLIP_CONTENT=$(pbpaste)
+from __future__ import annotations
 
-# Pass through Python's json.dumps and copy back to clipboard
-echo "$CLIP_CONTENT" | python3 -c 'import sys, json; print(json.dumps(sys.stdin.read()))' | pbcopy
+import json
+import sys
+from pathlib import Path
 
-lib/notify "Clipboard content has been JSON-escaped."
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def json_dumps(text: str) -> str:
+    """Return the JSON string literal encoding of text."""
+    return json.dumps(text)
+
+
+if __name__ == "__main__":
+    transform(json_dumps)

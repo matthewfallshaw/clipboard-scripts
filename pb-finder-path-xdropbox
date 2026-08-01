@@ -1,15 +1,30 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env python3
+"""Copy the Finder selection's path to the clipboard, shortened for readability."""
 
-# frozen_string_literal: true
+from __future__ import annotations
 
-%w[../lib ./lib].each { |l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require 'helper'
+import re
+import subprocess
+import sys
+from pathlib import Path
 
-system("osascript #{File.expand_path(File.join(File.dirname(__FILE__),
-                                               '../lib/copy-finder-path.scpt'))}")
-clipboard do |c|
-  c.gsub(%r{/Users/.*?/}, '~/')
-   .gsub(%r{~/Dropbox( \([^)]+?\))?/}, 'Dropbox:')
-   .gsub(%r{~/Google Drive( \([^)]+?\))?/}, 'Google Drive:')
-   .gsub(%r{/Volumes/GoogleDrive(-\d+)?/}, 'Google Drive:')
-end
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import LIB_DIR, transform  # noqa: E402
+
+FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
+
+
+def rewrite_finder_path(text: str) -> str:
+    """Shorten a Finder POSIX path: home dir, Dropbox, and Google Drive."""
+    text = re.sub(r"/Users/.*?/", "~/", text)
+    text = re.sub(r"~/Dropbox( \([^)]+?\))?/", "Dropbox:", text)
+    text = re.sub(r"~/Google Drive( \([^)]+?\))?/", "Google Drive:", text)
+    text = re.sub(r"/Volumes/GoogleDrive(-\d+)?/", "Google Drive:", text)
+    return text
+
+
+if __name__ == "__main__":
+    # copy-finder-path.scpt sets the clipboard itself; we then rewrite it in place.
+    subprocess.run(["/usr/bin/osascript", str(FINDER_SCRIPT)], check=True)
+    transform(rewrite_finder_path)

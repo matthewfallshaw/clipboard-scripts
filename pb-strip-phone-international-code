@@ -1,4 +1,17 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/bin/bash
+# Strip a leading international dialing code (e.g. "+61 ") from the clipboard
 
-pbpaste | sed -En "s/\+[0-9]{1,2} +(.*)/\1/p" | pbcopy && /usr/bin/env growlnotify -a Quicksilver -t "Clipboard:" -m "`pbpaste`"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+CLIP="$(/usr/bin/pbpaste)"
+RESULT="$(printf '%s' "$CLIP" | sed -En 's/\+[0-9]{1,2} +(.*)/\1/p')"
+
+if [ -z "$RESULT" ]; then
+  "$LIB/notify" "No international code found:
+$CLIP"
+  exit 0
+fi
+
+printf '%s' "$RESULT" | /usr/bin/pbcopy
+"$LIB/notify" "$RESULT"

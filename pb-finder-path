@@ -1,7 +1,20 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env python3
+"""Copy the Finder selection's POSIX path to the clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-system("osascript #{File.expand_path(File.join(File.dirname(__FILE__), "../lib/copy-finder-path.scpt"))}")
-notify clipboard
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import LIB_DIR, notify, paste  # noqa: E402
+
+FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
+
+
+if __name__ == "__main__":
+    # copy-finder-path.scpt sets the clipboard itself; we just report the result.
+    subprocess.run(["/usr/bin/osascript", str(FINDER_SCRIPT)], check=True)
+    notify(paste())

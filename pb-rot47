@@ -1,5 +1,9 @@
 #!/bin/bash
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+# ROT47-encode the contents of the clipboard
 
-pbpaste | tr '\!-~' 'P-~\!-O' | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -t "ROT47:" -m "`pbpaste`"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+RESULT="$(/usr/bin/pbpaste | tr '!-~' 'P-~!-O')"
+printf '%s' "$RESULT" | /usr/bin/pbcopy
+"$LIB/notify" "$RESULT"
