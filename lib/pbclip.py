@@ -48,17 +48,29 @@ def copy(text: str) -> None:
     subprocess.run(["/usr/bin/pbcopy"], input=text, text=True, check=True)
 
 
-def notify(message: str, sticky: bool = False) -> None:
-    """Show `message` to the user via lib/notify."""
-    command = [str(NOTIFY_SCRIPT)]
+def notify(message: str, sticky: bool = False, persist: bool = False) -> None:
+    """Show `message` to the user via lib/notify.
+
+    Passes ``--from`` as this process's own script name, so `lib/notify`
+    can name and namespace the notification after its caller rather than
+    after itself. Nothing reaches disk unless `persist` asks for it.
+    """
+    command = [str(NOTIFY_SCRIPT), "--from", Path(sys.argv[0]).name]
     if sticky:
         command.append("--sticky")
-    command.append(message)
+    if persist:
+        command.append("--persist")
+    # `--` guards `message` from being mistaken for one of the flags above,
+    # since it's arbitrary clipboard content that could start with anything.
+    command.extend(["--", message])
     subprocess.run(command, check=False)
 
 
 def transform(
-    fn: Callable[[str], str], sticky: bool = False, notify_result: bool = True
+    fn: Callable[[str], str],
+    sticky: bool = False,
+    notify_result: bool = True,
+    persist: bool = False,
 ) -> str:
     """Apply `fn` to the clipboard, put the result back, and show it.
 
@@ -67,7 +79,7 @@ def transform(
     result = fn(paste())
     copy(result)
     if notify_result:
-        notify(result, sticky)
+        notify(result, sticky, persist)
     return result
 
 

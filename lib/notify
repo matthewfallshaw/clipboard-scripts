@@ -1,25 +1,102 @@
 #!/bin/bash
 # Notify the user. The single notification abstraction for all pb-* scripts —
-# change the osascript calls below to change the notification backend everywhere.
+# change how notifications are shown here to change it everywhere.
 #
-#   notify [--sticky] MESSAGE...
+#   notify [--sticky] [--from NAME] [--title TEXT] [--id NAME]
+#          [--duration SECONDS] [--persist] [--] MESSAGE...
 #
-# --sticky shows an alert, which stays until dismissed. Plain notifications are
-# transient (macOS decides for how long). An alert is modal, so --sticky is
+# Prefers hammerspoon-config's bin/notify — non-modal, persistent-until-
+# dismissed, stacked; `bin/notify --help` is its contract — and passes every
+# flag but --from and --persist straight through to it. Falls back to the
+# osascript path below when it isn't installed; that path understands only
+# --sticky and the message, and silently ignores the rest.
+#
+# Notifications are --private by default, so nothing reaches disk: almost
+# every pb-* script echoes the clipboard, which is as likely to hold a
+# password as anything else. --persist opts back in, for an alert worth
+# surviving a Hammerspoon restart because it is recorded nowhere else.
+#
+# --from names the notification after the calling script, supplying the
+# default for both --title and --id, so repeated runs of one script replace
+# their own card instead of piling up. An explicit --title/--id wins. Every
+# caller should pass it: pb-*.py scripts arrive here via pbclip.py's notify()
+# and bash ones via a symlinked path, so "$0" is only ever "notify".
+#
+# --sticky on the fallback path shows an alert, which is modal, so it is
 # detached into the background — the caller must not block on the dismissal.
+# Plain fallback notifications are transient (macOS decides for how long).
 #
-# The message is passed to osascript as an argv item rather than interpolated
-# into the script text, so no AppleScript escaping is needed or attempted.
+# The message crosses into osascript as an argv item rather than interpolated
+# into script text, so the fallback needs no AppleScript escaping; bin/notify
+# does its own (base64) for its path.
 
 set -euo pipefail
 
+HAMMERSPOON_NOTIFY="$HOME/code/hammerspoon-config/bin/notify"
+
 sticky=false
-if [ "${1:-}" = "--sticky" ]; then
-  sticky=true
-  shift
-fi
+from=""
+have_title=false
+title=""
+have_id=false
+id=""
+have_duration=false
+duration=""
+persist=false
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --sticky)
+      sticky=true
+      shift
+      ;;
+    --from)
+      from=$2
+      shift 2
+      ;;
+    --title)
+      title=$2
+      have_title=true
+      shift 2
+      ;;
+    --id)
+      id=$2
+      have_id=true
+      shift 2
+      ;;
+    --duration)
+      duration=$2
+      have_duration=true
+      shift 2
+      ;;
+    --persist)
+      persist=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 message="$*"
+
+if [ -x "$HAMMERSPOON_NOTIFY" ]; then
+  [ -n "$from" ] || from="$(basename "$0")"
+  # Defaults first, so an explicitly-given --title/--id (later in the list)
+  # wins outright: bin/notify's parser keeps the last occurrence of a flag.
+  set -- --title "$from" --id "$from"
+  [ "$have_title" = true ] && set -- "$@" --title "$title"
+  [ "$have_id" = true ] && set -- "$@" --id "$id"
+  [ "$have_duration" = true ] && set -- "$@" --duration "$duration"
+  [ "$persist" = true ] || set -- "$@" --private
+  [ "$sticky" = true ] && set -- "$@" --sticky
+  exec "$HAMMERSPOON_NOTIFY" "$@" -- "$message"
+fi
 
 if [ "$sticky" = true ]; then
   /usr/bin/osascript \

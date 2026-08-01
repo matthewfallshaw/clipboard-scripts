@@ -6,4 +6,4 @@ LIB="$(dirname "$(readlink -f "$0")")/lib"
 
 RESULT="$(/usr/bin/pbpaste)"
 printf '%s' "$RESULT" | /usr/bin/pbcopy
-"$LIB/notify" "$RESULT"
+"$LIB/notify" --from "$(basename "$0")" -- "$RESULT"

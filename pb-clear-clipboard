@@ -5,4 +5,4 @@ set -euo pipefail
 LIB="$(dirname "$(readlink -f "$0")")/lib"
 
 /usr/bin/pbcopy < /dev/null
-"$LIB/notify" "Clipboard cleared"
+"$LIB/notify" --from "$(basename "$0")" -- "Clipboard cleared"

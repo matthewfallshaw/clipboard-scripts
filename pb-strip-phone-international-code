@@ -8,10 +8,10 @@ CLIP="$(/usr/bin/pbpaste)"
 RESULT="$(printf '%s' "$CLIP" | sed -En 's/\+[0-9]{1,2} +(.*)/\1/p')"
 
 if [ -z "$RESULT" ]; then
-  "$LIB/notify" "No international code found:
+  "$LIB/notify" --from "$(basename "$0")" -- "No international code found:
 $CLIP"
   exit 0
 fi
 
 printf '%s' "$RESULT" | /usr/bin/pbcopy
-"$LIB/notify" "$RESULT"
+"$LIB/notify" --from "$(basename "$0")" -- "$RESULT"
