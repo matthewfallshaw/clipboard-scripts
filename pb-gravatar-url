@@ -1,38 +1,39 @@
 #!/usr/bin/env python3
-"""Gravatar URL from email address in the macOS clipboard."""
+"""Gravatar URL for the email address in the macOS clipboard."""
+
+from __future__ import annotations
 
 import hashlib
-import os
 import re
-import subprocess
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import copy, die, notify, paste  # noqa: E402
+
+EMAIL_RE = re.compile(r"^[\w!#$%&'*+/=?^`{|}~.\-]+@[\w\-]+(?:\.[\w\-]+)+$")
 
 
 def gravatar_url(email: str) -> str:
-    """Return the Gravatar URL for the given email address."""
-    return f"http://gravatar.com/avatar/{hashlib.md5(email.strip().lower().encode()).hexdigest()}"
+    """Return the Gravatar URL for `email`."""
+    digest = hashlib.md5(email.strip().lower().encode()).hexdigest()
+    return "https://gravatar.com/avatar/%s" % digest
 
 
 def is_email(text: str) -> bool:
-    """Check whether text looks like an email address."""
-    return bool(re.match(r'^[\w!#$%&\'*+/=?^`{|}~.\-]+@[\w\-]+(?:\.[\w\-]+)+$', text))
-
-
-def notify(message: str) -> None:
-    """Send a notification via lib/notify."""
-    notify_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib', 'notify')
-    subprocess.run([notify_path, message])
+    """Whether `text` looks like an email address."""
+    return bool(EMAIL_RE.match(text.strip()))
 
 
 def main() -> None:
-    clipboard: str = subprocess.run(['pbpaste'], capture_output=True, text=True).stdout
-    if is_email(clipboard):
-        result: str = gravatar_url(clipboard)
-        subprocess.run(['pbcopy'], input=result, text=True)
-        notify(result)
-    else:
-        notify(f"I need something that looks like an email address:\n{clipboard}")
+    clipboard = paste()
+    if not is_email(clipboard):
+        die("I need something that looks like an email address:\n%s" % clipboard)
+    result = gravatar_url(clipboard)
+    copy(result)
+    notify(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

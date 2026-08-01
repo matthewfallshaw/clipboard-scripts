@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
-# MD5 hasherize the contents of the macOS clipboard
+"""MD5 hash the clipboard on macOS."""
+
+from __future__ import annotations
 
 import hashlib
-import os
-import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
 
 
 def md5_hex(text: str) -> str:
+    """Return the hex MD5 digest of `text`."""
     return hashlib.md5(text.encode()).hexdigest()
 
 
-def main() -> None:
-    content: str = subprocess.run(
-        ["pbpaste"], capture_output=True, text=True
-    ).stdout
-    result: str = md5_hex(content)
-    subprocess.run(["pbcopy"], input=result, text=True)
-    notify_path: str = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "lib", "notify"
-    )
-    subprocess.run([notify_path, result])
-
-
 if __name__ == "__main__":
-    main()
+    transform(md5_hex)

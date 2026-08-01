@@ -1,21 +1,14 @@
 """Tests for pb-gravatar-url transformation logic."""
 
+from __future__ import annotations
+
 import hashlib
-import pytest
 
-# Import the functions directly by loading the script as a module
-from pathlib import Path
-import importlib.machinery
-import importlib.util
+from conftest import load_script
 
-_script_path = Path(__file__).parent.parent / "pb-gravatar-url"
-_loader = importlib.machinery.SourceFileLoader("pb_gravatar_url", str(_script_path))
-_spec = importlib.util.spec_from_loader("pb_gravatar_url", _loader)
-_mod = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_mod)
-
-gravatar_url = _mod.gravatar_url
-is_email = _mod.is_email
+script = load_script("pb-gravatar-url")
+gravatar_url = script.gravatar_url
+is_email = script.is_email
 
 
 class TestIsEmail:
@@ -30,6 +23,10 @@ class TestIsEmail:
 
     def test_long_tld(self) -> None:
         assert is_email("user@example.museum")
+
+    def test_surrounding_whitespace(self) -> None:
+        """A copied address usually brings a trailing newline with it."""
+        assert is_email("  user@example.com\n")
 
     def test_not_an_email(self) -> None:
         assert not is_email("not an email")
@@ -46,13 +43,16 @@ class TestIsEmail:
 
 class TestGravatarUrl:
     def test_known_hash(self) -> None:
-        """Verify against a known MD5 hash."""
-        email = "test@example.com"
-        expected_hash = hashlib.md5(b"test@example.com").hexdigest()
-        assert gravatar_url(email) == f"http://gravatar.com/avatar/{expected_hash}"
+        expected = hashlib.md5(b"test@example.com").hexdigest()
+        assert gravatar_url("test@example.com") == (
+            "https://gravatar.com/avatar/%s" % expected
+        )
 
     def test_strips_whitespace(self) -> None:
         assert gravatar_url("  test@example.com  ") == gravatar_url("test@example.com")
 
     def test_lowercases(self) -> None:
         assert gravatar_url("TEST@EXAMPLE.COM") == gravatar_url("test@example.com")
+
+    def test_is_https(self) -> None:
+        assert gravatar_url("test@example.com").startswith("https://")
