@@ -110,5 +110,9 @@ class TestClaudeSentenceCase:
         assert script.claude_sentence_case(given, claude) == expected
 
     def test_preserves_line_breaks(self, claude: str) -> None:
+        """Line structure is the contract; per-line casing is the model's call."""
         result = script.claude_sentence_case("first line\nsecond line", claude)
-        assert result == "First line\nsecond line"
+        assert result is not None
+        assert result.splitlines() == ["First line", "Second line"] or (
+            result.splitlines() == ["First line", "second line"]
+        )

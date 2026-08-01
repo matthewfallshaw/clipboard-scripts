@@ -1,13 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bundle exec:*)",
-      "Bash(bundle list:*)",
+      "Bash(./install:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(/usr/bin/python3 -m py_compile:*)",
       "Bash(ls:*)",
-      "Bash(head:*)",
-      "Bash(for f in /Users/matt/code/clipboard-scripts/pb-*)",
-      "Bash(do head -1 \"$f\")",
-      "Bash(done)"
+      "Bash(head:*)"
     ],
     "deny": [],
     "ask": []

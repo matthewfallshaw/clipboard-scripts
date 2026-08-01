@@ -1,8 +1,8 @@
-"""Word/case transforms for the pb-* scripts.
+"""Word/case transforms shared by the pb-* scripts.
 
-A stdlib-only, Python 3.9-compatible replacement for the Ruby
-``lib/humanize.rb`` (``HumanizingString``) and the ``samsouder-titlecase``
-gem (itself a port of John Gruber's TitleCase).
+``titlecase`` follows John Gruber's TitleCase rules: capitalise every word except
+small words, unless first or last; leave anything with an internal capital
+(acronyms, camelCase) alone.
 """
 
 from __future__ import annotations
