@@ -7,14 +7,12 @@
 #
 # Prefers hammerspoon-config's bin/notify — non-modal, persistent-until-
 # dismissed, stacked; `bin/notify --help` is its contract — and passes every
-# flag but --from and --persist straight through to it. Falls back to the
-# osascript path below when it isn't installed; that path understands only
-# --sticky and the message, and silently ignores the rest.
+# flag but --from straight through to it. Falls back to the osascript path
+# below when it isn't installed; that path understands only --sticky and the
+# message, and silently ignores the rest.
 #
-# Notifications are --private by default, so nothing reaches disk: almost
-# every pb-* script echoes the clipboard, which is as likely to hold a
-# password as anything else. --persist opts back in, for an alert worth
-# surviving a Hammerspoon restart because it is recorded nowhere else.
+# Nothing reaches disk unless --persist asks for it, which is bin/notify's own
+# default, so there is nothing to send for it from here.
 #
 # --from names the notification after the calling script, supplying the
 # default for both --title and --id, so repeated runs of one script replace
@@ -93,7 +91,7 @@ if [ -x "$HAMMERSPOON_NOTIFY" ]; then
   [ "$have_title" = true ] && set -- "$@" --title "$title"
   [ "$have_id" = true ] && set -- "$@" --id "$id"
   [ "$have_duration" = true ] && set -- "$@" --duration "$duration"
-  [ "$persist" = true ] || set -- "$@" --private
+  [ "$persist" = true ] && set -- "$@" --persist
   [ "$sticky" = true ] && set -- "$@" --sticky
   exec "$HAMMERSPOON_NOTIFY" "$@" -- "$message"
 fi

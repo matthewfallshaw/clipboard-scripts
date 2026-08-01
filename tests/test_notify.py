@@ -49,7 +49,6 @@ class TestBackendDispatch:
         assert run_notify("--from", "pb-upcase", "--", "SHOUTING") == [
             "--title", "pb-upcase",
             "--id", "pb-upcase",
-            "--private",
             "--", "SHOUTING",
         ]
 
@@ -73,28 +72,6 @@ class TestBackendDispatch:
         assert "--sticky" not in argv
         assert "--duration" not in argv
 
-
-class TestPrivacy:
-    """Nothing a pb-* script shows may reach disk unless it asks.
-
-    Almost every script echoes the clipboard, which is as likely to hold a
-    password as a phone number, so the safe setting has to be the default
-    one — a script that forgets to ask must not be the leaky case.
-    """
-
-    def test_private_by_default(self, run_notify) -> None:
-        assert "--private" in run_notify("--from", "pb-x", "--", "hi")
-
-    def test_private_by_default_when_sticky(self, run_notify) -> None:
-        # Sticky cards outlive a Hammerspoon restart, so they are the ones
-        # that would linger on disk longest.
-        assert "--private" in run_notify("--from", "pb-x", "--sticky", "--", "hi")
-
-    def test_persist_opts_back_in(self, run_notify) -> None:
-        argv = run_notify("--from", "pb-x", "--persist", "--", "hi")
-        assert "--private" not in argv
-        assert "--persist" not in argv  # consumed here, not a bin/notify flag
-
     def test_message_is_last_and_introduced_by_a_separator(self, run_notify) -> None:
         assert run_notify("--from", "pb-x", "--", "hi")[-2:] == ["--", "hi"]
 
@@ -117,6 +94,33 @@ class TestPrivacy:
         # Useless as a label, which is why every caller passes --from; the
         # point is only that omitting it can't produce an empty title or id.
         assert run_notify("hello")[:4] == ["--title", "notify", "--id", "notify"]
+
+
+class TestPrivacy:
+    """Nothing a pb-* script shows may reach disk unless it asks.
+
+    Almost every script echoes the clipboard, which is as likely to hold a
+    password as a phone number. bin/notify holds the default — private
+    unless --persist — so what has to be true here is only that we never
+    ask for persistence on a caller's behalf.
+    """
+
+    def test_persistence_is_never_asked_for_by_default(self, run_notify) -> None:
+        assert "--persist" not in run_notify("--from", "pb-x", "--", "hi")
+
+    def test_persistence_is_never_asked_for_when_sticky(self, run_notify) -> None:
+        # Sticky cards never expire, so they are the ones that would sit on
+        # disk longest if this leaked.
+        assert "--persist" not in run_notify("--from", "pb-x", "--sticky", "--", "hi")
+
+    def test_persist_passes_through(self, run_notify) -> None:
+        assert "--persist" in run_notify("--from", "pb-x", "--persist", "--", "hi")
+
+    def test_the_retired_private_flag_is_never_sent(self, run_notify) -> None:
+        # bin/notify dropped --private when private became its default, and
+        # rejects unknown options with exit 2 — so reintroducing it here
+        # would not be a harmless no-op, it would cost the notification.
+        assert "--private" not in run_notify("--from", "pb-x", "--", "hi")
 
 
 REPO_DIR = Path(__file__).resolve().parent.parent

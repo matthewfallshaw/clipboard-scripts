@@ -25,7 +25,7 @@ Routes to hammerspoon-config's `bin/notify` (non-modal, persistent-until-dismiss
 
 `--from` names the notification after the calling script and is the default for both `--title` and `--id`. `pbclip.notify()` passes it automatically, from `sys.argv[0]`; bash scripts that call `lib/notify` directly pass `--from "$(basename "$0")"`. `--id` is a replace-in-place key: a second call with the same id updates that card instead of stacking a new one — so a script whose successive results should coexist, not replace each other, must pass its own unique `--id`.
 
-**Nothing reaches disk by default.** `lib/notify` sends the backend's `--private` unless `--persist` is given, because almost every script echoes the clipboard and the clipboard is as likely to hold a password as a phone number. `--persist` is for an alert worth surviving a Hammerspoon restart because nothing else records it; no script needs it today.
+**Nothing reaches disk by default.** That default lives in the backend, so `--persist` is passed straight through and its absence sends nothing. `--persist` is for an alert worth surviving a Hammerspoon restart because nothing else records it; no script needs it today.
 
 ## Commands
 
