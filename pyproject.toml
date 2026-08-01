@@ -2,9 +2,11 @@
 name = "clipboard-scripts"
 version = "0.1.0"
 description = "Scripts that transform the macOS clipboard, for launchers like Quicksilver and Alfred"
-# The scripts themselves must run under /usr/bin/python3 (3.9 on macOS), because
-# launchers invoke them with a bare PATH. Tests run under whatever uv resolves.
-requires-python = ">=3.9"
+# This constrains the *dev* environment only (pytest needs >=3.10).
+# The scripts themselves must run under /usr/bin/python3, which is 3.9 on macOS,
+# because launchers invoke them with a bare PATH — tests/test_shebang_compat.py
+# enforces that.
+requires-python = ">=3.10"
 dependencies = []
 
 [dependency-groups]

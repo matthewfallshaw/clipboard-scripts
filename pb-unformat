@@ -1,6 +1,9 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/bin/bash
+# Strip rich-text formatting from the clipboard, leaving plain text
 
-# remove any special formatting from the contents of the OSX clipboard
-pbpaste | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -t "Clipboard:" -m "`pbpaste`"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+RESULT="$(/usr/bin/pbpaste)"
+printf '%s' "$RESULT" | /usr/bin/pbcopy
+"$LIB/notify" "$RESULT"

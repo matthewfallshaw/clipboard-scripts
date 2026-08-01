@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import html
 import re
 import subprocess
 import sys
@@ -45,7 +44,7 @@ _BLOCK_TAGS = frozenset(
 _HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
 
 # Characters that would otherwise be read as Markdown syntax.
-_ESCAPE_RE = re.compile(r"([\\`*_\[\]#])")
+_ESCAPE_RE = re.compile(r"([\\`*_\[\]#<])")
 
 
 class _Node:
@@ -82,13 +81,10 @@ class _TreeBuilder(HTMLParser):
         # Unmatched end tag (malformed HTML) - ignore rather than raise.
 
     def handle_data(self, data: str) -> None:
+        # convert_charrefs=True means entities/char refs arrive already
+        # decoded via handle_data, so no separate handle_entityref/
+        # handle_charref overrides are needed.
         self.stack[-1].children.append(data)
-
-    def handle_entityref(self, name: str) -> None:
-        self.stack[-1].children.append(html.unescape("&%s;" % name))
-
-    def handle_charref(self, name: str) -> None:
-        self.stack[-1].children.append(html.unescape("&#%s;" % name))
 
 
 def _collapse_ws(text: str) -> str:

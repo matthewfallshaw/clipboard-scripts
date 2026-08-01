@@ -28,7 +28,7 @@ WORD_COUNT = 40
 LOWER = string.ascii_lowercase
 UPPER = string.ascii_uppercase
 DIGITS = string.digits
-PUNCTUATION = "!@#$%^&*-_=+"
+PUNCTUATION = "!@#$%^*-_=+"
 CHAR_CLASSES = (LOWER, UPPER, DIGITS, PUNCTUATION)
 ALL_CHARS = "".join(CHAR_CLASSES)
 

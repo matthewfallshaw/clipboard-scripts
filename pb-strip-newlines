@@ -1,5 +1,9 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/bin/bash
+# Strip newlines from the clipboard
 
-pbpaste | tr -d \\n | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -t "Clipboard newlines striped:" -m "`pbpaste`"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+RESULT="$(/usr/bin/pbpaste | tr -d '\n')"
+printf '%s' "$RESULT" | /usr/bin/pbcopy
+"$LIB/notify" "$RESULT"

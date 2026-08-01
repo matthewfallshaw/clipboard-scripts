@@ -1,6 +1,8 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/bin/bash
+# Clear the clipboard
 
-# clear the clipboard / pasteboard
-pbcopy < /dev/null
-/usr/bin/env growlnotify -a Quicksilver -t "Clipboard cleared"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+/usr/bin/pbcopy < /dev/null
+"$LIB/notify" "Clipboard cleared"

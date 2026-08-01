@@ -32,7 +32,7 @@ class TestCleanWord:
         assert clean_word("Hello") == "hello"
 
     def test_strips_apostrophe_bang_ampersand_dot_slash_digits(self) -> None:
-        assert clean_word("it's!&./0great1") == "itgreat"
+        assert clean_word("it's!&./0great1") == "itsgreat"
 
     def test_replaces_whitespace_with_dash(self) -> None:
         assert clean_word("two words") == "two-words"
