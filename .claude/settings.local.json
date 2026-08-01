@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec:*)",
+      "Bash(bundle list:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(for f in /Users/matt/code/clipboard-scripts/pb-*)",
+      "Bash(do head -1 \"$f\")",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

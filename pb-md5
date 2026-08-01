@@ -1,8 +1,26 @@
-#!/usr/bin/env ruby
-# MD5 hasherize the contents of the OSX clipboard
+#!/usr/bin/env python3
+# MD5 hasherize the contents of the macOS clipboard
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require 'digest/md5'
+import hashlib
+import os
+import subprocess
 
-clipboard {|c| Digest::MD5.hexdigest(c) }
+
+def md5_hex(text: str) -> str:
+    return hashlib.md5(text.encode()).hexdigest()
+
+
+def main() -> None:
+    content: str = subprocess.run(
+        ["pbpaste"], capture_output=True, text=True
+    ).stdout
+    result: str = md5_hex(content)
+    subprocess.run(["pbcopy"], input=result, text=True)
+    notify_path: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "lib", "notify"
+    )
+    subprocess.run([notify_path, result])
+
+
+if __name__ == "__main__":
+    main()

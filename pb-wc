@@ -1,9 +1,37 @@
-#!/usr/bin/env ruby
-# Word count the clipboard on OSX
+#!/usr/bin/env python3
+"""Word count the clipboard on macOS."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+import os
+import re
+import subprocess
+import sys
 
-chars = clipboard.size
-words = clipboard.scan(/[\w-]+/).size
-notify("#{words} words\n(#{chars} characters)")
+
+def count_words(text: str) -> int:
+    """Count words using Ruby-compatible [\\w-]+ pattern.
+
+    Hyphenated words count as single words. Underscores are word characters.
+    """
+    return len(re.findall(r'[\w-]+', text))
+
+
+def count_chars(text: str) -> int:
+    """Count characters in text."""
+    return len(text)
+
+
+def main() -> None:
+    content: str = subprocess.run(
+        ['pbpaste'], capture_output=True, text=True
+    ).stdout
+    words: int = count_words(content)
+    chars: int = count_chars(content)
+    message: str = f"{words} words\n({chars} characters)"
+    notify_path: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'lib', 'notify'
+    )
+    subprocess.run([notify_path, message])
+
+
+if __name__ == '__main__':
+    main()

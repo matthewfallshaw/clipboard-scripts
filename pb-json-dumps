@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Read from clipboard
+CLIP_CONTENT=$(pbpaste)
+
+# Pass through Python's json.dumps and copy back to clipboard
+echo "$CLIP_CONTENT" | python3 -c 'import sys, json; print(json.dumps(sys.stdin.read()))' | pbcopy
+
+lib/notify "Clipboard content has been JSON-escaped."

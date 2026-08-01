@@ -1,14 +1,38 @@
-#!/usr/bin/env ruby
-# Gravatar URL from email address in the OSX clipboard
+#!/usr/bin/env python3
+"""Gravatar URL from email address in the macOS clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require 'digest/md5'
+import hashlib
+import os
+import re
+import subprocess
+import sys
 
-if clipboard.match(Regexp.new('^[\w!#$%&\'*+/=?^`{|}~\.-]+@(?:[\w-]+\.)+(?:[\w]{2,3}|museum)$'))
-  clipboard do |c|
-   "http://gravatar.com/avatar/#{Digest::MD5.hexdigest(c.strip.downcase)}"
-  end
-else
-  notify("I need something that looks like an email address:\n#{clipboard}")
-end
+
+def gravatar_url(email: str) -> str:
+    """Return the Gravatar URL for the given email address."""
+    return f"http://gravatar.com/avatar/{hashlib.md5(email.strip().lower().encode()).hexdigest()}"
+
+
+def is_email(text: str) -> bool:
+    """Check whether text looks like an email address."""
+    return bool(re.match(r'^[\w!#$%&\'*+/=?^`{|}~.\-]+@[\w\-]+(?:\.[\w\-]+)+$', text))
+
+
+def notify(message: str) -> None:
+    """Send a notification via lib/notify."""
+    notify_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib', 'notify')
+    subprocess.run([notify_path, message])
+
+
+def main() -> None:
+    clipboard: str = subprocess.run(['pbpaste'], capture_output=True, text=True).stdout
+    if is_email(clipboard):
+        result: str = gravatar_url(clipboard)
+        subprocess.run(['pbcopy'], input=result, text=True)
+        notify(result)
+    else:
+        notify(f"I need something that looks like an email address:\n{clipboard}")
+
+
+if __name__ == '__main__':
+    main()

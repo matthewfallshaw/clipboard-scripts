@@ -1,3 +1,6 @@
 #!/bin/bash
-echo "display notification \"$*\" with title \"Notice\""
-/usr/bin/osascript -e "display notification \"$*\" with title \"Notice\""
+# Escape for AppleScript specifically - just quotes and backslashes
+message="$*"
+escaped_message="${message//\\/\\\\}"  # Escape backslashes first
+escaped_message="${escaped_message//\"/\\\"}"  # Then escape quotes
+/usr/bin/osascript -e "display notification \"$escaped_message\" with title \"Notice\""

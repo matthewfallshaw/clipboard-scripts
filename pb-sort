@@ -1,9 +1,10 @@
 #!/bin/sh
 PATH=/usr/local/bin:/opt/local/bin:$PATH
 
-if [ $(pbpaste | wc -l) -gt 1 ]; then
+num_lines="$(pbpaste | wc -l | tr -d '[:space:]')"
+if [ "${num_lines:-0}" -gt 1 ]; then
   pbpaste | sort -if | pbcopy
 else
-  pbpaste | tr , "\n" | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
+  pbpaste | tr ',' '\n' | sed 's/^ //' | sort -if | paste -s -d, - | pbcopy
 fi
-/usr/bin/env growlnotify -a Quicksilver -t "Sorted:" -m "`pbpaste`"
+/usr/bin/env growlnotify -a Quicksilver -t "Sorted:" -m "$(pbpaste)"

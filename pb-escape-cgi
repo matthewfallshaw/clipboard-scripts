@@ -1,8 +1,23 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env python3
 # CGI escape the contents of the OSX clipboard
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require 'cgi'
+import os
+import subprocess
+from urllib.parse import quote_plus
 
-clipboard {|c| CGI.escape(c) }
+
+def main() -> None:
+    content: str = subprocess.run(
+        ["pbpaste"], capture_output=True, text=True
+    ).stdout
+    result: str = quote_plus(content)
+    subprocess.run(["pbcopy"], input=result, text=True)
+
+    notify_path: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "lib", "notify"
+    )
+    subprocess.run([notify_path, result])
+
+
+if __name__ == "__main__":
+    main()

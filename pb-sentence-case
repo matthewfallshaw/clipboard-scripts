@@ -1,9 +1,138 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env python3
 # Sentence caserize the contents of the OSX clipboard
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+import re
+import shutil
+import subprocess
+import sys
 
-clipboard do |c|
-  c.downcase.gsub(/^.|\. +./) {|x| x.upcase }
-end
+
+def claude_sentence_case(text: str) -> str:
+    """Use Claude Code with Haiku for intelligent sentence casing."""
+    import json
+
+    print(
+        f"[pb-sentence-case] Calling Claude Code with {len(text)} chars",
+        file=sys.stderr,
+    )
+
+    prompt = (
+        """Convert this text to sentence case. Rules:
+- Capitalize the first letter of each sentence
+- Capitalize proper nouns (people, places, brands, products)
+- Lowercase everything else
+- Preserve the original line breaks and spacing
+
+Text:
+"""
+        + text
+    )
+
+    schema = {
+        "type": "object",
+        "properties": {"text": {"type": "string"}},
+        "required": ["text"],
+    }
+
+    try:
+        print("prompt: ", prompt, file=sys.stderr)
+        result = subprocess.run(
+            [
+                "claude",
+                "--model",
+                "haiku",
+                "--print",
+                "--output-format",
+                "json",
+                "--json-schema",
+                json.dumps(schema),
+                prompt,  # Positional argument
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        print(
+            f"[pb-sentence-case] Claude exit code: {result.returncode}", file=sys.stderr
+        )
+
+        if result.returncode != 0:
+            print(
+                f"[pb-sentence-case] Claude stderr: {result.stderr[:200]}",
+                file=sys.stderr,
+            )
+            return None
+
+        if result.returncode == 0:
+            print("response: ", result.stdout, file=sys.stderr)
+            response = json.loads(result.stdout)
+            # With --json-schema, the result is in structured_output
+            structured = response.get("structured_output", {})
+            text_result = structured.get("text", "").strip()
+            print(
+                f"[pb-sentence-case] Claude returned {len(text_result)} chars",
+                file=sys.stderr,
+            )
+            if text_result:
+                return text_result
+            else:
+                print(
+                    "[pb-sentence-case] Empty text in structured_output",
+                    file=sys.stderr,
+                )
+                return None
+    except subprocess.TimeoutExpired:
+        print("[pb-sentence-case] Claude timed out", file=sys.stderr)
+        return None
+    except FileNotFoundError:
+        print("[pb-sentence-case] Claude command not found", file=sys.stderr)
+        return None
+    except json.JSONDecodeError as e:
+        print(f"[pb-sentence-case] JSON decode error: {e}", file=sys.stderr)
+        return None
+
+    return None
+
+
+def simple_sentence_case(text: str) -> str:
+    """Simple regex-based sentence casing (fallback)."""
+    return re.sub(r"^.|(?<=\. ).", lambda m: m.group().upper(), text.lower())
+
+
+def main():
+    # Get clipboard content
+    content = subprocess.run(["pbpaste"], capture_output=True, text=True).stdout
+
+    if not content:
+        print("[pb-sentence-case] Empty clipboard, exiting", file=sys.stderr)
+        sys.exit(0)
+
+    print(
+        f"[pb-sentence-case] Processing {len(content)} chars from clipboard",
+        file=sys.stderr,
+    )
+
+    # Try Claude Code first if available
+    claude_path = shutil.which("claude")
+    if claude_path:
+        print(f"[pb-sentence-case] Found claude at: {claude_path}", file=sys.stderr)
+        result = claude_sentence_case(content)
+        if result:
+            print("[pb-sentence-case] Using Claude result", file=sys.stderr)
+            subprocess.run(["pbcopy"], input=result, text=True)
+            sys.exit(0)
+        else:
+            print(
+                "[pb-sentence-case] Claude returned None, falling back", file=sys.stderr
+            )
+    else:
+        print("[pb-sentence-case] Claude not found in PATH", file=sys.stderr)
+
+    # Fall back to simple approach
+    print("[pb-sentence-case] Using simple fallback", file=sys.stderr)
+    result = simple_sentence_case(content)
+    subprocess.run(["pbcopy"], input=result, text=True)
+
+
+if __name__ == "__main__":
+    main()
