@@ -16,11 +16,15 @@ FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
 
 
 def rewrite_finder_path(text: str) -> str:
-    """Shorten a Finder POSIX path: home dir, Dropbox, and Google Drive."""
+    """Shorten a Finder POSIX path: home dir, Dropbox, and Google Drive.
+
+    The Google Drive account is dropped — paths get shared within the org that
+    owns the drive, so "GoogleDrive-matt@bellroy.com" is noise. What survives is
+    the "My Drive" / "Shared drives" root, which is what tells them apart.
+    """
     text = re.sub(r"/Users/.*?/", "~/", text)
     text = re.sub(r"~/Dropbox( \([^)]+?\))?/", "Dropbox:", text)
-    text = re.sub(r"~/Google Drive( \([^)]+?\))?/", "Google Drive:", text)
-    text = re.sub(r"/Volumes/GoogleDrive(-\d+)?/", "Google Drive:", text)
+    text = re.sub(r"~/Library/CloudStorage/GoogleDrive-[^/]+/", "GoogleDrive:/", text)
     return text
 
 

@@ -101,17 +101,18 @@ class TestUnderscorize:
     def test_spaces_become_underscores(self) -> None:
         assert underscorize("foo bar") == "foo_bar"
 
-    def test_runs_are_not_collapsed(self) -> None:
-        # Matches the observed Ruby behaviour: each separator character
-        # becomes its own underscore.
-        assert underscorize("foo  bar") == "foo__bar"
-        assert underscorize("foo---bar") == "foo___bar"
+    def test_runs_are_collapsed(self) -> None:
+        assert underscorize("foo  bar") == "foo_bar"
+        assert underscorize("foo---bar") == "foo_bar"
+
+    def test_mixed_separator_run_collapses(self) -> None:
+        assert underscorize("Hello There,  World!") == "Hello_There_World"
 
     def test_leading_and_trailing_underscores_trimmed(self) -> None:
         assert underscorize("  foo bar  ") == "foo_bar"
 
-    def test_existing_underscores_untouched(self) -> None:
-        assert underscorize("a__b") == "a__b"
+    def test_existing_underscore_runs_collapse(self) -> None:
+        assert underscorize("a__b") == "a_b"
 
 
 class TestUndasherize:
@@ -120,9 +121,12 @@ class TestUndasherize:
     def test_dashes_and_underscores_become_spaces(self) -> None:
         assert undasherize("foo-bar_baz") == "foo bar baz"
 
-    def test_runs_are_not_collapsed(self) -> None:
-        assert undasherize("foo--bar") == "foo  bar"
-        assert undasherize("foo___bar") == "foo   bar"
+    def test_runs_are_collapsed(self) -> None:
+        assert undasherize("foo--bar") == "foo bar"
+        assert undasherize("foo___bar") == "foo bar"
+
+    def test_mixed_separator_run_collapses(self) -> None:
+        assert undasherize("foo-_-bar") == "foo bar"
 
     def test_leading_and_trailing_spaces_trimmed(self) -> None:
         assert undasherize("--foo--") == "foo"

@@ -43,13 +43,15 @@ The Ruby-to-Python migration is complete — no Ruby remains. Remaining directio
 ### To be confirmed by Matt
 
 - **Sticky notifications are now a modal alert.** `lib/notify --sticky` shows a `display alert` dialog, detached into the background so it doesn't block the caller. It stays until dismissed, but unlike Growl's sticky it steals focus. Used by `pb-rot13`, `pb-peek-at-clipboard` (over 100 chars), `pb-peek-at-clipboard-sticky`, `pb-pwgen-sticky`. If it's too intrusive, `lib/notify` is the only file to change.
-- **`bin/` is wiped and rebuilt** by `./install`, which removed 64 stale entries (old script copies plus leftover Bundler binstubs). It's still gitignored.
-- **`pb-sentence-case` timeout is 60s** (`CLAUDE_TIMEOUT_SECONDS`), up from a buried 10s that was below the ~8s typical round trip — some invocations were silently falling back to the regex. Debug output now needs `PB_DEBUG=1`.
-- **`pb-pwgen` no longer shells out to `pwgen`**; it uses Python's `secrets` with the symbol set `!@#$%^*-_=+` (quotes, backslash, `&`, `/`, `<>`, brackets, `|`, `;:,~` excluded as paste-hostile). The old `pwgen` default used no symbols at all.
-- **Word counting is Unicode-aware**, so "café résumé" counts as 2 words. Ruby's `\w` was ASCII-only and counted 4.
-- **`pb-tomarkdown` no longer needs `clipdown`.** It reads the pasteboard's `public.html` flavour and converts with a stdlib `html.parser` converter, which beat `clipdown` on multi-paragraph blockquotes and nested-list indentation.
-- **Deleted**: `pb-qrencode` (as asked), plus `pb-bit-ly`, `pb-pivotal-lookup`, `pb-passwd-composer`, `pb-markdown-to-html`, `pb-html-to-textile`, `pb-textile-to-html` (already staged for deletion before this work).
-- **`~/.dotfiles_secrets` is gone**, along with the Rakefile machinery that substituted secrets at install time. The only scripts that used it were the deleted ones. Nothing currently needs a secret; if something does, use `security find-generic-password`.
+  FIXME: Urghh, I hate it. Did we have a stub attempt to implement something better via Hammerspoon? Search (via subagent) ~/.hammerspoon/ to see if anything exists in there (if it does, do not attempt to complete the work from here — look for a doc like TODO.md or CLAUDE.md that might already contain a spec for what we want, including invocation arguments, and create/append/improve a spec if not existing/good).
 - **Behaviour deliberately preserved despite looking wrong**: `pb-underscore` does not collapse internal separator runs ("Hello There,  World" gives `Hello_There__World`), matching the Ruby. `pb-strip`'s default regex merges adjacent padded lines. Both were verified against real Ruby before porting.
-- **Bugs fixed in passing**: `pb-vidir-here` ignored the selected directory and hardcoded this repo's `bin/`; `pb-de-redirect-link` spoke plain HTTP on port 80 even for `https://` URLs, and crashed on relative `Location` headers; `pb-finder-path`/`-xdropbox` looked for `lib/` outside the repo; `pb-json-dumps` added a spurious trailing newline; `pb-define` interpolated the clipboard into a URL unescaped; `pb-escape-html` never worked because `htmlentities` was never in the Gemfile.
-- **`pb-lorem` and `pb-pwgen-pin` were silently broken** (missing `lorem` binary, missing `growlnotify`) and now work.
+  FIXME: Well spotted. Collapsing adjacent items seems better. Please fix.
+- **Bugs fixed in passing**: … `pb-finder-path`/`-xdropbox` looked for `lib/` outside the repo; …
+  FIXME: Excellent work. Please make the -xdropbox variant also convert
+
+  | current | desired |
+  | --- | ------- |
+  | `~/Library/CloudStorage/GoogleDrive-matt@intelligence.org/My Drive/~templates/Style templates.gdoc` | `GoogleDrive:/My Drive/~templates/Style templates.gdoc` |
+  | `~/Library/CloudStorage/GoogleDrive-matt@bellroy.com/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json` | `GoogleDrive:/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json` |
+
+  (or suggest a better output form; rationale - comms about GDrive docs are usually within org, so including the account identifiers is not useful)

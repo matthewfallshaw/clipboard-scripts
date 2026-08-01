@@ -32,31 +32,42 @@ class TestDropbox:
 
 
 class TestGoogleDrive:
-    def test_plain_google_drive_under_home(self) -> None:
-        assert (
-            rewrite_finder_path("/Users/matt/Google Drive/file")
-            == "Google Drive:file"
+    """Google Drive lives under ~/Library/CloudStorage/GoogleDrive-<account>/."""
+
+    def test_my_drive(self) -> None:
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@intelligence.org"
+            "/My Drive/~templates/Style templates.gdoc"
+        ) == "GoogleDrive:/My Drive/~templates/Style templates.gdoc"
+
+    def test_shared_drives(self) -> None:
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
+            "/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json"
+        ) == (
+            "GoogleDrive:/Shared drives/Advertising/Amazon/API"
+            "/OpenAPI_SponsoredProducts.json"
         )
 
-    def test_google_drive_with_parenthetical_suffix(self) -> None:
-        assert (
-            rewrite_finder_path(
-                "/Users/matt/Google Drive (matthew.fallshaw@gmail.com)/file"
-            )
-            == "Google Drive:file"
-        )
+    def test_account_is_dropped_whichever_it_is(self) -> None:
+        for account in (
+            "matt@bellroy.com",
+            "matt@intelligence.org",
+            "matthew.fallshaw@gmail.com",
+        ):
+            assert rewrite_finder_path(
+                "/Users/matt/Library/CloudStorage/GoogleDrive-%s/My Drive/f" % account
+            ) == "GoogleDrive:/My Drive/f"
 
-    def test_volumes_googledrive(self) -> None:
-        assert (
-            rewrite_finder_path("/Volumes/GoogleDrive/My Drive/file")
-            == "Google Drive:My Drive/file"
-        )
+    def test_drive_root_itself(self) -> None:
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/My Drive/"
+        ) == "GoogleDrive:/My Drive/"
 
-    def test_volumes_googledrive_numbered(self) -> None:
-        assert (
-            rewrite_finder_path("/Volumes/GoogleDrive-1/My Drive/file")
-            == "Google Drive:My Drive/file"
-        )
+    def test_other_cloudstorage_providers_left_alone(self) -> None:
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/OneDrive-Personal/file"
+        ) == "~/Library/CloudStorage/OneDrive-Personal/file"
 
 
 class TestUnaffectedPaths:

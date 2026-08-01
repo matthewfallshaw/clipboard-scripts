@@ -149,18 +149,16 @@ def titlecase(text: str) -> str:
 
 
 def underscorize(text: str) -> str:
-    """Replace each non-alphanumeric character with an underscore, then
-    trim leading/trailing underscores. Shared by pb-underscore and
-    pb-underscorize.
+    """Collapse runs of non-alphanumeric characters into single underscores,
+    and trim them. Shared by pb-underscore and pb-underscorize.
     """
-    result = re.sub(r"[\W_]", "_", text, flags=re.ASCII)
+    result = re.sub(r"[\W_]+", "_", text, flags=re.ASCII)
     return re.sub(r"^_+|_+$", "", result)
 
 
 def undasherize(text: str) -> str:
-    """Replace each dash/underscore with a space, then trim leading and
-    trailing spaces. Shared by pb-undasherize, pb-ununderscore, and
-    pb-ununderscorize.
+    """Collapse runs of dashes/underscores into single spaces, and trim them.
+    Shared by pb-undasherize, pb-ununderscore, and pb-ununderscorize.
     """
-    result = re.sub(r"[-_]", " ", text)
+    result = re.sub(r"[-_]+", " ", text)
     return re.sub(r"^ +| +$", "", result)
