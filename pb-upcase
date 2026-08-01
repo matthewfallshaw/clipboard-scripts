@@ -1,6 +1,9 @@
 #!/bin/bash
-# Upcase the contents of the OSX clipboard
+# Upcase the contents of the macOS clipboard
 
-RESULT=$(pbpaste | tr '[:lower:]' '[:upper:]')
-echo -n "$RESULT" | pbcopy
-"$(dirname "$0")/lib/notify" "$RESULT"
+set -euo pipefail
+LIB="$(dirname "$(readlink -f "$0")")/lib"
+
+RESULT="$(/usr/bin/pbpaste | tr '[:lower:]' '[:upper:]')"
+printf '%s' "$RESULT" | /usr/bin/pbcopy
+"$LIB/notify" "$RESULT"

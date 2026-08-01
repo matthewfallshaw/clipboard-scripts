@@ -73,7 +73,7 @@ class TestTitlecase:
         assert titlecase("the hobbit") == "The Hobbit"
 
     def test_small_word_capitalised_when_last(self) -> None:
-        assert titlecase("what dreams may come from") == "What Dreams May Come From"
+        assert titlecase("something to look at") == "Something to Look At"
 
     def test_already_uppercase_acronym_left_alone(self) -> None:
         assert titlecase("NASA launches rocket") == "NASA Launches Rocket"
