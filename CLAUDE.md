@@ -40,18 +40,12 @@ uv run pytest -m live   # tests that hit the network or the Claude API
 
 The Ruby-to-Python migration is complete — no Ruby remains. Remaining direction: keep dependencies minimal and setup simple.
 
-### To be confirmed by Matt
+### Sticky notifications want replacing
 
-- **Sticky notifications are now a modal alert.** `lib/notify --sticky` shows a `display alert` dialog, detached into the background so it doesn't block the caller. It stays until dismissed, but unlike Growl's sticky it steals focus. Used by `pb-rot13`, `pb-peek-at-clipboard` (over 100 chars), `pb-peek-at-clipboard-sticky`, `pb-pwgen-sticky`. If it's too intrusive, `lib/notify` is the only file to change.
-  FIXME: Urghh, I hate it. Did we have a stub attempt to implement something better via Hammerspoon? Search (via subagent) ~/.hammerspoon/ to see if anything exists in there (if it does, do not attempt to complete the work from here — look for a doc like TODO.md or CLAUDE.md that might already contain a spec for what we want, including invocation arguments, and create/append/improve a spec if not existing/good).
-- **Behaviour deliberately preserved despite looking wrong**: `pb-underscore` does not collapse internal separator runs ("Hello There,  World" gives `Hello_There__World`), matching the Ruby. `pb-strip`'s default regex merges adjacent padded lines. Both were verified against real Ruby before porting.
-  FIXME: Well spotted. Collapsing adjacent items seems better. Please fix.
-- **Bugs fixed in passing**: … `pb-finder-path`/`-xdropbox` looked for `lib/` outside the repo; …
-  FIXME: Excellent work. Please make the -xdropbox variant also convert
+`lib/notify --sticky` uses `display alert` — persistent, but a modal that steals focus. Matt hates it. Used by `pb-rot13`, `pb-peek-at-clipboard` (over 100 chars), `pb-peek-at-clipboard-sticky`, `pb-pwgen-sticky`.
 
-  | current | desired |
-  | --- | ------- |
-  | `~/Library/CloudStorage/GoogleDrive-matt@intelligence.org/My Drive/~templates/Style templates.gdoc` | `GoogleDrive:/My Drive/~templates/Style templates.gdoc` |
-  | `~/Library/CloudStorage/GoogleDrive-matt@bellroy.com/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json` | `GoogleDrive:/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json` |
+The replacement is specced in `~/code/hammerspoon-config/TODO.md` and not yet built. Nothing in this repo changes when it is, beyond `lib/notify` — keep it that way.
 
-  (or suggest a better output form; rationale - comms about GDrive docs are usually within org, so including the account identifiers is not useful)
+### Open question for Matt
+
+`pb-strip`'s default regex swallows the newline after each trimmed line, so two adjacent padded lines get glued together. Left as-is pending a decision: trim each line but keep the line breaks?
