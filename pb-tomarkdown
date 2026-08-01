@@ -159,7 +159,7 @@ def _render_verbatim(node: _Node) -> str:
 
 def _render_list(node: _Node, depth: int) -> str:
     ordered = node.tag == "ol"
-    indent = "  " * depth
+    indent = "    " * depth
     lines: List[str] = []
     index = 1
     for child in node.children:

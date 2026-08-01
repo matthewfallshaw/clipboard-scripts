@@ -1,37 +1,21 @@
 #!/usr/bin/env python3
 """Word count the clipboard on macOS."""
 
-import os
-import re
-import subprocess
+from __future__ import annotations
+
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import notify, paste  # noqa: E402
+from textstats import count_chars, count_words  # noqa: E402
 
 
-def count_words(text: str) -> int:
-    """Count words using Ruby-compatible [\\w-]+ pattern.
-
-    Hyphenated words count as single words. Underscores are word characters.
-    """
-    return len(re.findall(r'[\w-]+', text))
+def word_count_message(text: str) -> str:
+    """Build the "{words} words\\n({chars} characters)" notification message."""
+    return f"{count_words(text)} words\n({count_chars(text)} characters)"
 
 
-def count_chars(text: str) -> int:
-    """Count characters in text."""
-    return len(text)
-
-
-def main() -> None:
-    content: str = subprocess.run(
-        ['pbpaste'], capture_output=True, text=True
-    ).stdout
-    words: int = count_words(content)
-    chars: int = count_chars(content)
-    message: str = f"{words} words\n({chars} characters)"
-    notify_path: str = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'lib', 'notify'
-    )
-    subprocess.run([notify_path, message])
-
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    notify(word_count_message(paste()))

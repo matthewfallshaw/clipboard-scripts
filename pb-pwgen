@@ -1,13 +1,48 @@
-#!/usr/bin/env ruby
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+#!/usr/bin/env python3
+"""Put a new random password in the clipboard, without displaying it."""
 
-PWGEN_COMMAND = %w[~/.nix-profile/bin/pwgen /usr/local/bin/pwgen /opt/local/bin/pwgen].find {|p| File.file?(File.expand_path(p)) }
+from __future__ import annotations
+
+import secrets
+import string
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import copy, notify  # noqa: E402
+
 PWGEN_LENGTH = 20
 
-# put a new pw in the clipboard without looking at it
-system("#{PWGEN_COMMAND} #{PWGEN_LENGTH} -1 | tr -d \"\\n\" | pbcopy")
+# Letters, digits, and a conservative punctuation set: safe to paste into
+# shells, URLs, HTML forms, and CSV without needing escaping.
+LOWER = string.ascii_lowercase
+UPPER = string.ascii_uppercase
+DIGITS = string.digits
+PUNCTUATION = "!@#$%^&*-_=+"
+CHAR_CLASSES = (LOWER, UPPER, DIGITS, PUNCTUATION)
+ALL_CHARS = "".join(CHAR_CLASSES)
 
-notify("New password in clipboard", false)
 
-# vi: filetype=ruby
+def _secure_shuffle(items: list) -> None:
+    """Shuffle `items` in place using a cryptographically secure RNG."""
+    for i in range(len(items) - 1, 0, -1):
+        j = secrets.randbelow(i + 1)
+        items[i], items[j] = items[j], items[i]
+
+
+def generate_password(length: int = PWGEN_LENGTH) -> str:
+    """Generate a random password containing at least one of each character class."""
+    if length < len(CHAR_CLASSES):
+        raise ValueError(
+            f"length must be at least {len(CHAR_CLASSES)} to include all character classes"
+        )
+    chars = [secrets.choice(char_class) for char_class in CHAR_CLASSES]
+    chars.extend(secrets.choice(ALL_CHARS) for _ in range(length - len(chars)))
+    _secure_shuffle(chars)
+    return "".join(chars)
+
+
+if __name__ == "__main__":
+    copy(generate_password(PWGEN_LENGTH))
+    notify("New password in clipboard")

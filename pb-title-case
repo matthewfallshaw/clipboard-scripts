@@ -1,10 +1,16 @@
-#!/usr/bin/env ruby
-# Title caserize the contents of the OSX clipboard
+#!/usr/bin/env python3
+"""Title-case the clipboard on macOS."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require 'helper'
-require 'titlecase'
+from __future__ import annotations
 
-clipboard do |c|
-  c.titlecase
-end
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from inflect import titlecase  # noqa: E402
+from pbclip import transform  # noqa: E402
+
+
+if __name__ == "__main__":
+    transform(titlecase)

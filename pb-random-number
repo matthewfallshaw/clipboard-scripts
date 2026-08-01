@@ -1,13 +1,26 @@
-#!/usr/bin/env ruby
-# Clipboard a random number
+#!/usr/bin/env python3
+"""Put a random number in the clipboard."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-clipboard do |c|
-  if ARGV.empty?
-    rand(999999) + 1
-  else
-    rand(ARGV.first.to_i) + 1
-  end
-end
+import random
+import sys
+from pathlib import Path
+from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+DEFAULT_MAXIMUM = 999999
+
+
+def random_number(maximum: int = DEFAULT_MAXIMUM, rng: Optional[random.Random] = None) -> int:
+    """Return a random integer in [1, maximum], inclusive."""
+    generator = rng if rng is not None else random
+    return generator.randint(1, maximum)
+
+
+if __name__ == "__main__":
+    maximum = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_MAXIMUM
+    transform(lambda _clipboard: str(random_number(maximum)))

@@ -1,5 +1,22 @@
-#!/bin/sh
-PATH=/usr/local/bin:/opt/local/bin:$PATH
+#!/usr/bin/env python3
+"""Put a new random 4-digit PIN in the clipboard, without displaying it."""
 
-printf '%04d' $(jot -nr 1 0 9999) | pbcopy
-/usr/bin/env growlnotify -a Quicksilver -m "New pin in clipboard."
+from __future__ import annotations
+
+import secrets
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import copy, notify  # noqa: E402
+
+
+def generate_pin() -> str:
+    """Generate a random 4-digit PIN, zero-padded."""
+    return f"{secrets.randbelow(10000):04d}"
+
+
+if __name__ == "__main__":
+    copy(generate_pin())
+    notify("New pin in clipboard.")

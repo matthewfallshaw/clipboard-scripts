@@ -1,12 +1,21 @@
-#!/usr/bin/env ruby
-# Word count the clipboard on OSX
+#!/usr/bin/env python3
+"""Word count the clipboard on macOS (characters first, then words)."""
 
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
+from __future__ import annotations
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+import sys
+from pathlib import Path
 
-chars = clipboard.size
-words = clipboard.scan(/[\w-]+/).size
-notify("#{chars} characters\n(#{words} words)")
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import notify, paste  # noqa: E402
+from textstats import count_chars, count_words  # noqa: E402
+
+
+def char_count_message(text: str) -> str:
+    """Build the "{chars} characters\\n({words} words)" notification message."""
+    return f"{count_chars(text)} characters\n({count_words(text)} words)"
+
+
+if __name__ == "__main__":
+    notify(char_count_message(paste()))

@@ -1,129 +1,114 @@
-"""Tests for pb-sentence-case script using Claude Code."""
+"""Tests for pb-sentence-case.
 
-import subprocess
+The Claude-backed path is exercised by tests marked `live`, which are deselected
+by default (they cost money and take ~8s each). Run them with `uv run pytest -m live`.
+"""
+
+from __future__ import annotations
+
 import pytest
-from pathlib import Path
+
+from conftest import load_script
+
+script = load_script("pb-sentence-case")
 
 
-SCRIPT_PATH = Path(__file__).parent.parent / "bin" / "pb-sentence-case"
-PBCOPY = "/usr/bin/pbcopy"
-PBPASTE = "/usr/bin/pbpaste"
+class TestStripCodeFence:
+    def test_leaves_plain_text_alone(self) -> None:
+        assert script.strip_code_fence("Hello world") == "Hello world"
 
+    def test_unwraps_bare_fence(self) -> None:
+        assert script.strip_code_fence("```\nHello world\n```") == "Hello world"
 
-def run_sentence_case(text: str) -> str:
-    """Run pb-sentence-case on given text via clipboard."""
-    # Ensure script is installed
-    if not SCRIPT_PATH.exists():
-        raise RuntimeError(
-            f"Script not found at {SCRIPT_PATH}. Run 'rake install' first."
+    def test_unwraps_tagged_fence(self) -> None:
+        assert script.strip_code_fence("```json\n{}\n```") == "{}"
+
+    def test_keeps_internal_newlines(self) -> None:
+        assert script.strip_code_fence("```\nline one\nline two\n```") == (
+            "line one\nline two"
         )
 
-    # Put text in clipboard
-    subprocess.run([PBCOPY], input=text, text=True, check=True)
+    def test_leaves_unterminated_fence_alone(self) -> None:
+        assert script.strip_code_fence("```\nHello") == "```\nHello"
 
-    # Run the installed script
-    result = subprocess.run(
-        [str(SCRIPT_PATH)],
-        capture_output=True,
-        text=True,
-        timeout=15
+
+class TestSimpleSentenceCase:
+    def test_capitalises_first_letter(self) -> None:
+        assert script.simple_sentence_case("hello world") == "Hello world"
+
+    def test_capitalises_each_sentence(self) -> None:
+        assert script.simple_sentence_case("this is first. this is second.") == (
+            "This is first. This is second."
+        )
+
+    def test_downcases_shouting(self) -> None:
+        assert script.simple_sentence_case("THE QUICK BROWN FOX") == (
+            "The quick brown fox"
+        )
+
+    def test_loses_proper_nouns(self) -> None:
+        """The documented limitation of the fallback — Claude is what fixes this."""
+        assert script.simple_sentence_case("i love Apple products") == (
+            "I love apple products"
+        )
+
+    def test_empty_string(self) -> None:
+        assert script.simple_sentence_case("") == ""
+
+    def test_preserves_line_breaks(self) -> None:
+        assert script.simple_sentence_case("first line\nsecond line") == (
+            "First line\nsecond line"
+        )
+
+
+class TestSentenceCaseFallback:
+    def test_falls_back_when_claude_is_missing(self, monkeypatch) -> None:
+        monkeypatch.setattr(script, "find_binary", lambda name: None)
+        assert script.sentence_case("hello world. goodbye world.") == (
+            "Hello world. Goodbye world."
+        )
+
+    def test_falls_back_when_claude_fails(self, monkeypatch) -> None:
+        monkeypatch.setattr(script, "find_binary", lambda name: "/bin/claude")
+        monkeypatch.setattr(script, "claude_sentence_case", lambda text, claude: None)
+        assert script.sentence_case("hello world") == "Hello world"
+
+    def test_uses_claude_when_it_answers(self, monkeypatch) -> None:
+        monkeypatch.setattr(script, "find_binary", lambda name: "/bin/claude")
+        monkeypatch.setattr(
+            script, "claude_sentence_case", lambda text, claude: "I love Apple products"
+        )
+        assert script.sentence_case("i love apple products") == "I love Apple products"
+
+
+@pytest.mark.live
+class TestClaudeSentenceCase:
+    """Real calls to the Claude CLI. Deselected unless `-m live`."""
+
+    @pytest.fixture(scope="class")
+    def claude(self) -> str:
+        found = script.find_binary("claude")
+        if not found:
+            pytest.skip("claude CLI not installed")
+        return found
+
+    @pytest.mark.parametrize(
+        "given,expected",
+        [
+            ("i love apple products", "I love Apple products"),
+            ("working at bellroy is great", "Working at Bellroy is great"),
+            ("google is based in california", "Google is based in California"),
+            (
+                "bellroy is a company. they make great products.",
+                "Bellroy is a company. They make great products.",
+            ),
+        ],
     )
+    def test_preserves_proper_nouns(
+        self, claude: str, given: str, expected: str
+    ) -> None:
+        assert script.claude_sentence_case(given, claude) == expected
 
-    if result.returncode != 0:
-        raise RuntimeError(f"pb-sentence-case failed: {result.stderr}")
-
-    # Get result from clipboard
-    output = subprocess.run(
-        [PBPASTE],
-        capture_output=True,
-        text=True,
-        check=True
-    ).stdout
-
-    return output
-
-
-class TestProperNounPreservation:
-    """Test that proper nouns are preserved during sentence casing."""
-
-    def test_brand_name_preservation(self):
-        """Bellroy should stay capitalized."""
-        result = run_sentence_case("reasons to buy a bellroy")
-        assert result == "Reasons to buy a Bellroy"
-
-    def test_well_known_brands(self):
-        """Well-known brands like Apple should be preserved."""
-        result = run_sentence_case("i love apple products")
-        assert result == "I love Apple products"
-
-    def test_multiple_proper_nouns(self):
-        """Multiple proper nouns should be preserved."""
-        result = run_sentence_case("i love san francisco and apple products")
-        assert result == "I love San Francisco and Apple products"
-
-    def test_company_name(self):
-        """Company names should be preserved."""
-        result = run_sentence_case("working at bellroy is great")
-        assert result == "Working at Bellroy is great"
-
-    def test_location_names(self):
-        """Geographic locations should be capitalized."""
-        result = run_sentence_case("google is based in california")
-        assert result == "Google is based in California"
-
-
-class TestMultipleSentences:
-    """Test handling of multiple sentences."""
-
-    def test_two_sentences(self):
-        """Two sentences should both start capitalized."""
-        result = run_sentence_case("this is first. this is second.")
-        assert result == "This is first. This is second."
-
-    def test_multiple_sentences_with_proper_nouns(self):
-        """Proper nouns preserved across multiple sentences."""
-        result = run_sentence_case("bellroy is a company. they make great products.")
-        assert result == "Bellroy is a company. They make great products."
-
-
-class TestEdgeCases:
-    """Test edge cases and boundary conditions."""
-
-    def test_already_correct(self):
-        """Already correct text should remain unchanged."""
-        result = run_sentence_case("Claude Code is great")
-        assert result == "Claude Code is great"
-
-    def test_empty_string(self):
-        """Empty string should remain empty."""
-        result = run_sentence_case("")
-        assert result == ""
-
-    def test_single_word(self):
-        """Single word should be capitalized."""
-        result = run_sentence_case("hello")
-        assert result == "Hello"
-
-    def test_all_lowercase(self):
-        """All lowercase should be properly cased."""
-        result = run_sentence_case("the quick brown fox")
-        assert result == "The quick brown fox"
-
-    def test_preserves_spacing(self):
-        """Line breaks and spacing should be preserved."""
-        result = run_sentence_case("first line\nsecond line")
-        assert result == "First line\nSecond line"
-
-
-class TestFallbackBehavior:
-    """Test that fallback works when Claude Code is unavailable."""
-
-    def test_basic_sentence_case_fallback(self, monkeypatch):
-        """Fallback should still capitalize sentence starts."""
-        # Make 'claude' unavailable
-        monkeypatch.setenv("PATH", "/nonexistent")
-
-        result = run_sentence_case("hello world. goodbye world.")
-        # Fallback won't preserve proper nouns, but should capitalize sentences
-        assert result.startswith("Hello")
-        assert ". G" in result or ". g" in result  # Either works for fallback
+    def test_preserves_line_breaks(self, claude: str) -> None:
+        result = script.claude_sentence_case("first line\nsecond line", claude)
+        assert result == "First line\nsecond line"

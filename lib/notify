@@ -1,6 +1,38 @@
 #!/bin/bash
-# Escape for AppleScript specifically - just quotes and backslashes
+# Notify the user. The single notification abstraction for all pb-* scripts —
+# change the osascript calls below to change the notification backend everywhere.
+#
+#   notify [--sticky] MESSAGE...
+#
+# --sticky shows an alert, which stays until dismissed. Plain notifications are
+# transient (macOS decides for how long). An alert is modal, so --sticky is
+# detached into the background — the caller must not block on the dismissal.
+#
+# The message is passed to osascript as an argv item rather than interpolated
+# into the script text, so no AppleScript escaping is needed or attempted.
+
+set -euo pipefail
+
+sticky=false
+if [ "${1:-}" = "--sticky" ]; then
+  sticky=true
+  shift
+fi
+
 message="$*"
-escaped_message="${message//\\/\\\\}"  # Escape backslashes first
-escaped_message="${escaped_message//\"/\\\"}"  # Then escape quotes
-/usr/bin/osascript -e "display notification \"$escaped_message\" with title \"Notice\""
+
+if [ "$sticky" = true ]; then
+  /usr/bin/osascript \
+    -e 'on run argv' \
+    -e 'display alert "Notice" message (item 1 of argv)' \
+    -e 'end run' \
+    -- "$message" >/dev/null &
+  disown
+  exit 0
+else
+  exec /usr/bin/osascript \
+    -e 'on run argv' \
+    -e 'display notification (item 1 of argv) with title "Notice"' \
+    -e 'end run' \
+    -- "$message"
+fi

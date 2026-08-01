@@ -1,7 +1,14 @@
-#!/usr/bin/env ruby
-# Growl notify the current content of the clipboard
+#!/usr/bin/env python3
+"""Notify the current content of the clipboard, always sticky."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-notify(clipboard, true)
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import notify, paste  # noqa: E402
+
+if __name__ == "__main__":
+    notify(paste(), sticky=True)

@@ -1,9 +1,16 @@
-#!/usr/bin/env ruby
-# Underscore the clipboard on OSX
+#!/usr/bin/env python3
+"""Underscore the clipboard on macOS."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-clipboard do |c|
-  c.gsub(/[\W_]/,"_").gsub(/-+/,"_").gsub(/^_+|_+$/,"")
-end
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from inflect import underscorize  # noqa: E402
+from pbclip import transform  # noqa: E402
+
+
+if __name__ == "__main__":
+    transform(underscorize)

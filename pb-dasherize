@@ -1,7 +1,22 @@
-#!/usr/bin/env ruby
-# Dasherize the clipboard on OSX
+#!/usr/bin/env python3
+"""Dasherize the clipboard on macOS."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-clipboard {|c| c.gsub(/[\W_]/,"-").gsub(/-+/,"-").gsub(/^-+|-+$/,"") }
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+
+def dasherize(text: str) -> str:
+    """Collapse runs of non-word characters into single dashes, and trim them."""
+    dashed = re.sub(r"[\W_]", "-", text, flags=re.ASCII)
+    return re.sub(r"^-+|-+$", "", re.sub(r"-+", "-", dashed))
+
+
+if __name__ == "__main__":
+    transform(dasherize)

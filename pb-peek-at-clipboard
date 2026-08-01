@@ -1,13 +1,23 @@
-#!/usr/bin/env ruby
-# Growl notify the current content of the clipboard
+#!/usr/bin/env python3
+"""Notify the current content of the clipboard."""
 
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
+from __future__ import annotations
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import notify, paste  # noqa: E402
 
 LONG_MESSAGE_LENGTH = 100
 
-sticky = clipboard.size > LONG_MESSAGE_LENGTH
-notify(clipboard, sticky)
+
+def is_long(text: str) -> bool:
+    """Whether `text` is long enough to warrant a sticky notification."""
+    return len(text) > LONG_MESSAGE_LENGTH
+
+
+if __name__ == "__main__":
+    content = paste()
+    notify(content, sticky=is_long(content))

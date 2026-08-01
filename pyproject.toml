@@ -1,12 +1,21 @@
 [project]
 name = "clipboard-scripts"
 version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.13"
+description = "Scripts that transform the macOS clipboard, for launchers like Quicksilver and Alfred"
+# The scripts themselves must run under /usr/bin/python3 (3.9 on macOS), because
+# launchers invoke them with a bare PATH. Tests run under whatever uv resolves.
+requires-python = ">=3.9"
 dependencies = []
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
     "pytest-watcher>=0.6.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not live'"
+markers = [
+    "live: hits a real external service (network, Claude API). Run with `-m live`.",
 ]

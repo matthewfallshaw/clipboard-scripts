@@ -1,7 +1,16 @@
-#!/usr/bin/env ruby
-# Sentence caserize the contents of the OSX clipboard
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
-require "humanize"
+#!/usr/bin/env python3
+"""Humanize the clipboard on macOS."""
 
-clipboard {|c| HumanizingString.new(c).humanize }
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from inflect import humanize  # noqa: E402
+from pbclip import transform  # noqa: E402
+
+
+if __name__ == "__main__":
+    transform(humanize)

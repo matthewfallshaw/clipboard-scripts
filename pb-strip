@@ -1,11 +1,40 @@
-#!/usr/bin/env ruby
-# Clear regex argument (default empty lines & leading or trailing spaces) from the clipboard on OSX
+#!/usr/bin/env python3
+"""Strip whitespace-padded lines from the clipboard, or delete matches of a
+regex given as the first argument."""
 
-%w[../lib ./lib].each {|l| $LOAD_PATH.unshift("#{File.dirname(File.expand_path(__FILE__))}/#{l}") }
-require "helper"
+from __future__ import annotations
 
-if ARGV.empty? then
-  clipboard {|c| c.gsub(/^\s+(.*?)\s+$\n?/,'\1') }
-else
-  clipboard {|c| c.gsub(Regexp.new(ARGV.first),'') }
-end
+import re
+import sys
+from pathlib import Path
+from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+
+from pbclip import transform  # noqa: E402
+
+_DEFAULT_PATTERN = re.compile(r"^\s+(.*?)\s+$\n?", re.MULTILINE)
+
+
+def strip_text(text: str, pattern: Optional[str] = None) -> str:
+    """Strip whitespace-padded lines, or delete matches of `pattern`.
+
+    With no `pattern`: for each line with both leading and trailing
+    whitespace, trims that whitespace. As a side effect of the trailing
+    "\\n?" this also swallows the newline that follows a trimmed line, so
+    runs of such lines (including blank lines, which are all whitespace)
+    collapse together -- this is the original Ruby regex's behaviour,
+    preserved here rather than "fixed".
+
+    With `pattern`: every match of that regular expression is deleted.
+    Regex syntax is Python's `re`, not Ruby's -- most simple patterns are
+    the same, but a pattern using Ruby-only syntax will need updating.
+    """
+    if pattern is None:
+        return _DEFAULT_PATTERN.sub(r"\1", text)
+    return re.sub(pattern, "", text)
+
+
+if __name__ == "__main__":
+    arg = sys.argv[1] if len(sys.argv) > 1 else None
+    transform(lambda text: strip_text(text, arg))
