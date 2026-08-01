@@ -13,25 +13,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 from pbclip import transform  # noqa: E402
 
-_DEFAULT_PATTERN = re.compile(r"^\s+(.*?)\s+$\n?", re.MULTILINE)
-
-
 def strip_text(text: str, pattern: Optional[str] = None) -> str:
-    """Strip whitespace-padded lines, or delete matches of `pattern`.
+    """Tidy whitespace, or delete matches of `pattern`.
 
-    With no `pattern`: for each line with both leading and trailing
-    whitespace, trims that whitespace. As a side effect of the trailing
-    "\\n?" this also swallows the newline that follows a trimmed line, so
-    runs of such lines (including blank lines, which are all whitespace)
-    collapse together -- this is the original Ruby regex's behaviour,
-    preserved here rather than "fixed".
+    With no `pattern`: trim leading and trailing whitespace from every line,
+    drop the lines left empty, and keep the line breaks between the rest.
 
     With `pattern`: every match of that regular expression is deleted.
     Regex syntax is Python's `re`, not Ruby's -- most simple patterns are
     the same, but a pattern using Ruby-only syntax will need updating.
     """
     if pattern is None:
-        return _DEFAULT_PATTERN.sub(r"\1", text)
+        lines = (line.strip() for line in text.splitlines())
+        return "\n".join(line for line in lines if line)
     return re.sub(pattern, "", text)
 
 

@@ -34,13 +34,18 @@ class TestDropbox:
 class TestGoogleDrive:
     """Google Drive lives under ~/Library/CloudStorage/GoogleDrive-<account>/."""
 
-    def test_my_drive(self) -> None:
+    def test_my_drive_keeps_the_account(self) -> None:
+        """Three accounts are mounted, so "My Drive" alone would be ambiguous."""
         assert rewrite_finder_path(
             "/Users/matt/Library/CloudStorage/GoogleDrive-matt@intelligence.org"
             "/My Drive/~templates/Style templates.gdoc"
-        ) == "GoogleDrive:/My Drive/~templates/Style templates.gdoc"
+        ) == (
+            "GoogleDrive-matt@intelligence.org:/My Drive"
+            "/~templates/Style templates.gdoc"
+        )
 
-    def test_shared_drives(self) -> None:
+    def test_shared_drives_drops_the_account(self) -> None:
+        """A shared drive is org-owned; which account reached it is noise."""
         assert rewrite_finder_path(
             "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
             "/Shared drives/Advertising/Amazon/API/OpenAPI_SponsoredProducts.json"
@@ -49,7 +54,18 @@ class TestGoogleDrive:
             "/OpenAPI_SponsoredProducts.json"
         )
 
-    def test_account_is_dropped_whichever_it_is(self) -> None:
+    def test_shared_drives_drops_any_account(self) -> None:
+        for account in (
+            "matt@bellroy.com",
+            "matt@intelligence.org",
+            "matthew.fallshaw@gmail.com",
+        ):
+            assert rewrite_finder_path(
+                "/Users/matt/Library/CloudStorage/GoogleDrive-%s/Shared drives/f"
+                % account
+            ) == "GoogleDrive:/Shared drives/f"
+
+    def test_my_drive_keeps_any_account(self) -> None:
         for account in (
             "matt@bellroy.com",
             "matt@intelligence.org",
@@ -57,12 +73,24 @@ class TestGoogleDrive:
         ):
             assert rewrite_finder_path(
                 "/Users/matt/Library/CloudStorage/GoogleDrive-%s/My Drive/f" % account
-            ) == "GoogleDrive:/My Drive/f"
+            ) == "GoogleDrive-%s:/My Drive/f" % account
 
-    def test_drive_root_itself(self) -> None:
+    def test_my_drive_root_itself(self) -> None:
         assert rewrite_finder_path(
             "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/My Drive/"
-        ) == "GoogleDrive:/My Drive/"
+        ) == "GoogleDrive-matt@bellroy.com:/My Drive/"
+
+    def test_shared_drives_root_itself(self) -> None:
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
+            "/Shared drives/"
+        ) == "GoogleDrive:/Shared drives/"
+
+    def test_unexpected_root_keeps_the_account(self) -> None:
+        """Anything that isn't "Shared drives" is treated as needing the account."""
+        assert rewrite_finder_path(
+            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/Other/f"
+        ) == "GoogleDrive-matt@bellroy.com:/Other/f"
 
     def test_other_cloudstorage_providers_left_alone(self) -> None:
         assert rewrite_finder_path(
