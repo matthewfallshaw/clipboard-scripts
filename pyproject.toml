@@ -11,7 +11,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-watcher>=0.6.3",
 ]
 
