@@ -200,6 +200,26 @@ class TestFollowRedirects:
         assert result == "http://a"
         assert any("looping" in message for message in messages)
 
+    def test_non_web_redirect_target_is_refused(self, messages: list[str]) -> None:
+        # A redirect to file:// must not reach the clipboard, even though we
+        # never open it: the last reachable http(s) URL is the useful answer.
+        def fetch(_url: str) -> tuple[int, str | None]:
+            return (302, "file:///etc/passwd")
+
+        result = mod.follow_redirects("http://a", fetch=fetch)
+
+        assert result == "http://a"
+        assert any("isn't a web link" in message for message in messages)
+
+    def test_relative_redirect_keeps_the_scheme_it_started_with(self) -> None:
+        def fetch(url: str) -> tuple[int, str | None]:
+            return (302, "/b") if url == "https://example.com/a" else (200, None)
+
+        assert (
+            mod.follow_redirects("https://example.com/a", fetch=fetch)
+            == "https://example.com/b"
+        )
+
     def test_hop_limit_notifies_and_returns_last_url(self, messages: list[str]) -> None:
         def fetch(url: str) -> tuple[int, str | None]:
             n = int(url.rsplit("/", 1)[-1])
