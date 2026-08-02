@@ -41,15 +41,11 @@ class TestRoundTrip:
             "pb-unescape-quoted-printable"
         ).unescape_quoted_printable
         original = "hello world"
-        assert (
-            unescape_quoted_printable(escape_quoted_printable(original)) == original
-        )
+        assert unescape_quoted_printable(escape_quoted_printable(original)) == original
 
     def test_round_trip_unicode_multiline(self) -> None:
         unescape_quoted_printable = load_script(
             "pb-unescape-quoted-printable"
         ).unescape_quoted_printable
         original = "café\nwörld\n" + ("x" * 100)
-        assert (
-            unescape_quoted_printable(escape_quoted_printable(original)) == original
-        )
+        assert unescape_quoted_printable(escape_quoted_printable(original)) == original

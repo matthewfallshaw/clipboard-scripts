@@ -8,13 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 
 def fix_nested_quotes(text: str) -> str:
     """Double-quote `text`, turning double quotes within it into single quotes."""
     inner = text[1:-1] if text.startswith('"') and text.endswith('"') else text
-    return '"%s"' % inner.replace('"', "'")
+    return '"{}"'.format(inner.replace('"', "'"))
 
 
 if __name__ == "__main__":

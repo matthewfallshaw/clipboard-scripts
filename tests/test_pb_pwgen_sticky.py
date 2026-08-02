@@ -3,6 +3,7 @@
 import random
 from pathlib import Path
 
+import pytest
 from conftest import load_script
 
 mod = load_script("pb-pwgen-sticky")
@@ -75,7 +76,9 @@ class TestRandomWords:
 
 
 class TestFindWordlist:
-    def test_finds_crossword_file_case_insensitively(self, tmp_path: Path, monkeypatch) -> None:
+    def test_finds_crossword_file_case_insensitively(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         documents = tmp_path / "Documents"
         wordlist_dir = documents / "wordlists"
         wordlist_dir.mkdir(parents=True)
@@ -84,18 +87,24 @@ class TestFindWordlist:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         assert find_wordlist() == target
 
-    def test_missing_documents_dir_returns_none(self, tmp_path: Path, monkeypatch) -> None:
+    def test_missing_documents_dir_returns_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         assert find_wordlist() is None
 
-    def test_no_matching_wordlist_returns_none(self, tmp_path: Path, monkeypatch) -> None:
+    def test_no_matching_wordlist_returns_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         documents = tmp_path / "Documents"
         (documents / "wordlists").mkdir(parents=True)
         (documents / "wordlists" / "moby-names-21986").write_text("a\n")
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         assert find_wordlist() is None
 
-    def test_survives_renamed_wordlist_directory(self, tmp_path: Path, monkeypatch) -> None:
+    def test_survives_renamed_wordlist_directory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         documents = tmp_path / "Documents"
         wordlist_dir = documents / "wordlist-archive-2026"
         wordlist_dir.mkdir(parents=True)

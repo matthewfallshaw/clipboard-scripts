@@ -32,18 +32,13 @@ class TestRoundTrip:
             "pb-escape-quoted-printable"
         ).escape_quoted_printable
         original = "héllo\nwörld\n" + ("y" * 120)
-        assert (
-            escape_quoted_printable(unescape_quoted_printable(
-                escape_quoted_printable(original)
-            ))
-            == escape_quoted_printable(original)
-        )
+        assert escape_quoted_printable(
+            unescape_quoted_printable(escape_quoted_printable(original))
+        ) == escape_quoted_printable(original)
 
     def test_round_trip_simple(self) -> None:
         escape_quoted_printable = load_script(
             "pb-escape-quoted-printable"
         ).escape_quoted_printable
         original = "plain text, no surprises"
-        assert (
-            unescape_quoted_printable(escape_quoted_printable(original)) == original
-        )
+        assert unescape_quoted_printable(escape_quoted_printable(original)) == original

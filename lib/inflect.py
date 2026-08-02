@@ -17,12 +17,12 @@ _SMALL_HUMANIZE_WORDS = re.compile(r"^(?:and|the|of|is)$", re.IGNORECASE)
 
 
 def _all_caps(text: str) -> bool:
-    """True if `text` has no ASCII lowercase letter anywhere."""
+    """Report whether `text` has no ASCII lowercase letter anywhere."""
     return re.search(r"[a-z]", text) is None
 
 
 def _dotty(text: str) -> bool:
-    """True if `text` contains a "word.word" boundary (e.g. "Pirates.S01")."""
+    """Report whether `text` contains a "word.word" boundary (e.g. "Pirates.S01")."""
     return re.search(r"\w+\.\w+", text, flags=re.ASCII) is not None
 
 
@@ -81,8 +81,27 @@ def humanize(text: str) -> str:
 
 SMALL_WORDS = frozenset(
     {
-        "a", "an", "and", "as", "at", "but", "by", "en", "for", "if", "in",
-        "of", "on", "or", "the", "to", "v", "v.", "via", "vs", "vs.",
+        "a",
+        "an",
+        "and",
+        "as",
+        "at",
+        "but",
+        "by",
+        "en",
+        "for",
+        "if",
+        "in",
+        "of",
+        "on",
+        "or",
+        "the",
+        "to",
+        "v",
+        "v.",
+        "via",
+        "vs",
+        "vs.",
     }
 )
 
@@ -91,9 +110,9 @@ _STRIP_PUNCT = ".,;:!?\"'()[]{}"
 
 
 def _has_internal_capital(word: str) -> bool:
-    """True for words like "iPhone", "NASA", "McDonald" -- leave them alone."""
+    """Report whether `word` is an "iPhone"/"NASA"/"McDonald" -- leave those alone."""
     letters = [c for c in word if c.isalpha()]
-    return len(letters) >= 2 and any(c.isupper() for c in letters[1:])
+    return any(c.isupper() for c in letters[1:])
 
 
 def _titlecase_word(word: str) -> str:
@@ -131,7 +150,7 @@ def titlecase(text: str) -> str:
         word = tokens[i]
         core = word.strip(_STRIP_PUNCT)
         is_small = core.lower() in SMALL_WORDS
-        if is_small and i != first_i and i != last_i:
+        if is_small and i not in (first_i, last_i):
             tokens[i] = "-".join(_lowercase_word(p) for p in word.split("-"))
         else:
             tokens[i] = "-".join(_titlecase_word(p) for p in word.split("-"))
@@ -149,8 +168,9 @@ def titlecase(text: str) -> str:
 
 
 def underscorize(text: str) -> str:
-    """Collapse runs of non-alphanumeric characters into single underscores,
-    and trim them. Shared by pb-underscore and pb-underscorize.
+    """Collapse runs of non-alphanumeric characters into single underscores.
+
+    Trims them from the ends too. Shared by pb-underscore and pb-underscorize.
     """
     result = re.sub(r"[\W_]+", "_", text, flags=re.ASCII)
     return re.sub(r"^_+|_+$", "", result)
@@ -158,6 +178,7 @@ def underscorize(text: str) -> str:
 
 def undasherize(text: str) -> str:
     """Collapse runs of dashes/underscores into single spaces, and trim them.
+
     Shared by pb-undasherize, pb-ununderscore, and pb-ununderscorize.
     """
     result = re.sub(r"[-_]+", " ", text)

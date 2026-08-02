@@ -3,16 +3,19 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import osascript, require_binary  # noqa: E402
+from pbclip import osascript, require_binary
 
+# Where an unnamed buffer goes. Predictable on purpose, so it's the same file
+# to come back to - but under $HOME, not /tmp: nothing else is going to reach
+# for this name, and it survives a reboot.
+SCRATCH_PATH = str(Path.home() / "tmp" / "vim-scratch.txt")
 NEW_FILE_PROMPT = "Filename for new Vim buffer"
 OPEN_FILE_PROMPT = "Open file in Vim (change to open a new file)"
 
@@ -41,34 +44,37 @@ end run
 
 
 def is_text_file(path: str) -> bool:
-    """True if the `file` command reports text content for `path`."""
+    """Report whether the `file` command sees text content in `path`."""
     result = subprocess.run(
         ["/usr/bin/file", path], capture_output=True, text=True, check=True
     )
     return "text" in result.stdout
 
 
-def choose_target(finder_path: str, is_text: Callable[[str], bool]) -> Tuple[str, str]:
+def choose_target(finder_path: str, is_text: Callable[[str], bool]) -> tuple[str, str]:
     """Decide which file to open and what to prompt for, given a Finder path.
 
     Returns (path, dialog_text):
-    - nothing selected (or it no longer exists) -> /tmp/tempfile.txt
+    - nothing selected (or it no longer exists) -> `SCRATCH_PATH`
     - a directory -> readme.txt inside it
     - a non-text file -> readme.txt alongside it
     - a text file -> that file, with a dialog inviting a different name
     """
-    if not finder_path or not os.path.exists(finder_path):
-        return ("/tmp/tempfile.txt", NEW_FILE_PROMPT)
-    if os.path.isdir(finder_path):
-        return (os.path.join(finder_path, "readme.txt"), NEW_FILE_PROMPT)
+    path = Path(finder_path)
+    if not finder_path or not path.exists():
+        return (SCRATCH_PATH, NEW_FILE_PROMPT)
+    if path.is_dir():
+        return (str(path / "readme.txt"), NEW_FILE_PROMPT)
     if not is_text(finder_path):
-        return (os.path.join(os.path.dirname(finder_path), "readme.txt"), NEW_FILE_PROMPT)
+        return (str(path.parent / "readme.txt"), NEW_FILE_PROMPT)
     return (finder_path, OPEN_FILE_PROMPT)
 
 
 if __name__ == "__main__":
     finder_path = osascript(FINDER_SELECTION_SCRIPT)
     target_path, dialog_text = choose_target(finder_path, is_text_file)
+    if target_path == SCRATCH_PATH:
+        Path(SCRATCH_PATH).parent.mkdir(parents=True, exist_ok=True)
 
     file_name = osascript(DIALOG_SCRIPT, [dialog_text, target_path])
     if not file_name:

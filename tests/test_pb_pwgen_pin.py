@@ -1,6 +1,7 @@
 """Tests for pb-pwgen-pin PIN generation."""
 
-from conftest import load_script
+import pytest
+from conftest import always, load_script
 
 mod = load_script("pb-pwgen-pin")
 generate_pin = mod.generate_pin
@@ -13,12 +14,12 @@ class TestGeneratePin:
     def test_is_all_digits(self) -> None:
         assert generate_pin().isdigit()
 
-    def test_is_zero_padded(self, monkeypatch) -> None:
-        monkeypatch.setattr(mod.secrets, "randbelow", lambda n: 7)
+    def test_is_zero_padded(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(mod.secrets, "randbelow", always(7))
         assert generate_pin() == "0007"
 
-    def test_max_value(self, monkeypatch) -> None:
-        monkeypatch.setattr(mod.secrets, "randbelow", lambda n: 9999)
+    def test_max_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(mod.secrets, "randbelow", always(9999))
         assert generate_pin() == "9999"
 
     def test_range_across_many_runs(self) -> None:

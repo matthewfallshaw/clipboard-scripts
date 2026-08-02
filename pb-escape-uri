@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 # Ruby's `URI.escape`/`URI.encode` (removed in modern Ruby) left alphanumerics,
 # the unreserved "mark" characters `-_.!~*'()`, and the URI reserved characters

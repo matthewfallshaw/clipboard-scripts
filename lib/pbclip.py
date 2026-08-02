@@ -18,7 +18,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, NoReturn
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 LIB_DIR: Path = Path(__file__).resolve().parent
 REPO_DIR: Path = LIB_DIR.parent
@@ -26,9 +29,9 @@ NOTIFY_SCRIPT: Path = LIB_DIR / "notify"
 
 # Quicksilver and Alfred launch scripts with a bare PATH, so anything not in
 # /usr/bin or /bin has to be hunted for.
-SEARCH_PATHS: "tuple[str, ...]" = (
-    os.path.expanduser("~/.nix-profile/bin"),
-    "/etc/profiles/per-user/%s/bin" % os.environ.get("USER", ""),
+SEARCH_PATHS: tuple[str, ...] = (
+    str(Path("~/.nix-profile/bin").expanduser()),
+    f"/etc/profiles/per-user/{os.environ.get('USER', '')}/bin",
     "/run/current-system/sw/bin",
     "/opt/homebrew/bin",
     "/usr/local/bin",
@@ -48,7 +51,7 @@ def copy(text: str) -> None:
     subprocess.run(["/usr/bin/pbcopy"], input=text, text=True, check=True)
 
 
-def notify(message: str, sticky: bool = False, persist: bool = False) -> None:
+def notify(message: str, *, sticky: bool = False, persist: bool = False) -> None:
     """Show `message` to the user via lib/notify.
 
     Passes ``--from`` as this process's own script name, so `lib/notify`
@@ -68,6 +71,7 @@ def notify(message: str, sticky: bool = False, persist: bool = False) -> None:
 
 def transform(
     fn: Callable[[str], str],
+    *,
     sticky: bool = False,
     notify_result: bool = True,
     persist: bool = False,
@@ -79,11 +83,11 @@ def transform(
     result = fn(paste())
     copy(result)
     if notify_result:
-        notify(result, sticky, persist)
+        notify(result, sticky=sticky, persist=persist)
     return result
 
 
-def osascript(script: str, args: Optional[Sequence[str]] = None) -> str:
+def osascript(script: str, args: Sequence[str] | None = None) -> str:
     """Run an AppleScript and return its output.
 
     `args` are passed as argv items, so they need no AppleScript escaping; the
@@ -97,7 +101,7 @@ def osascript(script: str, args: Optional[Sequence[str]] = None) -> str:
     ).stdout.rstrip("\n")
 
 
-def find_binary(name: str) -> Optional[str]:
+def find_binary(name: str) -> str | None:
     """Locate an external binary, searching beyond a launcher's bare PATH."""
     found = shutil.which(name)
     if found:
@@ -113,11 +117,11 @@ def require_binary(name: str) -> str:
     """Locate an external binary, or tell the user it's missing and stop."""
     found = find_binary(name)
     if found is None:
-        die("%s isn't installed (or I can't find it)." % name)
-    return found  # type: ignore[return-value]
+        die(f"{name} isn't installed (or I can't find it).")
+    return found
 
 
-def die(message: str, sticky: bool = False) -> "None":
+def die(message: str, *, sticky: bool = False) -> NoReturn:
     """Tell the user why we're not doing what they asked, and stop."""
-    notify(message, sticky)
+    notify(message, sticky=sticky)
     sys.exit(1)

@@ -7,8 +7,7 @@ by default (they cost money and take ~8s each). Run them with `uv run pytest -m 
 from __future__ import annotations
 
 import pytest
-
-from conftest import load_script
+from conftest import always, load_script
 
 script = load_script("pb-sentence-case")
 
@@ -62,21 +61,27 @@ class TestSimpleSentenceCase:
 
 
 class TestSentenceCaseFallback:
-    def test_falls_back_when_claude_is_missing(self, monkeypatch) -> None:
-        monkeypatch.setattr(script, "find_binary", lambda name: None)
+    def test_falls_back_when_claude_is_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(script, "find_binary", always(None))
         assert script.sentence_case("hello world. goodbye world.") == (
             "Hello world. Goodbye world."
         )
 
-    def test_falls_back_when_claude_fails(self, monkeypatch) -> None:
-        monkeypatch.setattr(script, "find_binary", lambda name: "/bin/claude")
-        monkeypatch.setattr(script, "claude_sentence_case", lambda text, claude: None)
+    def test_falls_back_when_claude_fails(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(script, "find_binary", always("/bin/claude"))
+        monkeypatch.setattr(script, "claude_sentence_case", always(None))
         assert script.sentence_case("hello world") == "Hello world"
 
-    def test_uses_claude_when_it_answers(self, monkeypatch) -> None:
-        monkeypatch.setattr(script, "find_binary", lambda name: "/bin/claude")
+    def test_uses_claude_when_it_answers(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(script, "find_binary", always("/bin/claude"))
         monkeypatch.setattr(
-            script, "claude_sentence_case", lambda text, claude: "I love Apple products"
+            script,
+            "claude_sentence_case",
+            always("I love Apple products"),
         )
         assert script.sentence_case("i love apple products") == "I love Apple products"
 
@@ -93,7 +98,7 @@ class TestClaudeSentenceCase:
         return found
 
     @pytest.mark.parametrize(
-        "given,expected",
+        ("given", "expected"),
         [
             ("i love apple products", "I love Apple products"),
             ("working at bellroy is great", "Working at Bellroy is great"),

@@ -20,8 +20,7 @@ class TestHomeDir:
 class TestDropbox:
     def test_plain_dropbox(self) -> None:
         assert (
-            rewrite_finder_path("/Users/matt/Dropbox/notes.txt")
-            == "Dropbox:notes.txt"
+            rewrite_finder_path("/Users/matt/Dropbox/notes.txt") == "Dropbox:notes.txt"
         )
 
     def test_dropbox_with_parenthetical_suffix(self) -> None:
@@ -60,10 +59,11 @@ class TestGoogleDrive:
             "matt@intelligence.org",
             "matthew.fallshaw@gmail.com",
         ):
-            assert rewrite_finder_path(
-                "/Users/matt/Library/CloudStorage/GoogleDrive-%s/Shared drives/f"
-                % account
-            ) == "GoogleDrive:/Shared drives/f"
+            root = f"/Users/matt/Library/CloudStorage/GoogleDrive-{account}"
+            assert (
+                rewrite_finder_path(f"{root}/Shared drives/f")
+                == "GoogleDrive:/Shared drives/f"
+            )
 
     def test_my_drive_keeps_any_account(self) -> None:
         for account in (
@@ -71,31 +71,45 @@ class TestGoogleDrive:
             "matt@intelligence.org",
             "matthew.fallshaw@gmail.com",
         ):
-            assert rewrite_finder_path(
-                "/Users/matt/Library/CloudStorage/GoogleDrive-%s/My Drive/f" % account
-            ) == "GoogleDrive-%s:/My Drive/f" % account
+            assert (
+                rewrite_finder_path(
+                    f"/Users/matt/Library/CloudStorage/GoogleDrive-{account}/My Drive/f"
+                )
+                == f"GoogleDrive-{account}:/My Drive/f"
+            )
 
     def test_my_drive_root_itself(self) -> None:
-        assert rewrite_finder_path(
-            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/My Drive/"
-        ) == "GoogleDrive-matt@bellroy.com:/My Drive/"
+        root = "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
+        assert (
+            rewrite_finder_path(f"{root}/My Drive/")
+            == "GoogleDrive-matt@bellroy.com:/My Drive/"
+        )
 
     def test_shared_drives_root_itself(self) -> None:
-        assert rewrite_finder_path(
-            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
-            "/Shared drives/"
-        ) == "GoogleDrive:/Shared drives/"
+        assert (
+            rewrite_finder_path(
+                "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com"
+                "/Shared drives/"
+            )
+            == "GoogleDrive:/Shared drives/"
+        )
 
     def test_unexpected_root_keeps_the_account(self) -> None:
         """Anything that isn't "Shared drives" is treated as needing the account."""
-        assert rewrite_finder_path(
-            "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/Other/f"
-        ) == "GoogleDrive-matt@bellroy.com:/Other/f"
+        assert (
+            rewrite_finder_path(
+                "/Users/matt/Library/CloudStorage/GoogleDrive-matt@bellroy.com/Other/f"
+            )
+            == "GoogleDrive-matt@bellroy.com:/Other/f"
+        )
 
     def test_other_cloudstorage_providers_left_alone(self) -> None:
-        assert rewrite_finder_path(
-            "/Users/matt/Library/CloudStorage/OneDrive-Personal/file"
-        ) == "~/Library/CloudStorage/OneDrive-Personal/file"
+        assert (
+            rewrite_finder_path(
+                "/Users/matt/Library/CloudStorage/OneDrive-Personal/file"
+            )
+            == "~/Library/CloudStorage/OneDrive-Personal/file"
+        )
 
 
 class TestUnaffectedPaths:

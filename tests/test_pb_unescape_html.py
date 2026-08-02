@@ -29,7 +29,10 @@ class TestUnescapeHtml:
         assert unescape_html("hello world") == "hello world"
 
     def test_multiline(self) -> None:
-        assert unescape_html("&lt;b&gt;x&lt;/b&gt;\n&lt;i&gt;y&lt;/i&gt;") == "<b>x</b>\n<i>y</i>"
+        assert (
+            unescape_html("&lt;b&gt;x&lt;/b&gt;\n&lt;i&gt;y&lt;/i&gt;")
+            == "<b>x</b>\n<i>y</i>"
+        )
 
     def test_no_entities_is_noop(self) -> None:
         assert unescape_html("not & escaped < at all") == "not & escaped < at all"
@@ -38,5 +41,5 @@ class TestUnescapeHtml:
 class TestRoundTrip:
     def test_round_trip(self) -> None:
         escape_html = load_script("pb-escape-html").escape_html
-        original = "<div class=\"a & b\">it's <b>bold</b></div> café"
+        original = '<div class="a & b">it\'s <b>bold</b></div> café'
         assert unescape_html(escape_html(original)) == original

@@ -10,15 +10,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import copy, die, notify, paste  # noqa: E402
+from pbclip import copy, die, notify, paste
 
 EMAIL_RE = re.compile(r"^[\w!#$%&'*+/=?^`{|}~.\-]+@[\w\-]+(?:\.[\w\-]+)+$")
 
 
 def gravatar_url(email: str) -> str:
     """Return the Gravatar URL for `email`."""
-    digest = hashlib.md5(email.strip().lower().encode()).hexdigest()
-    return "https://gravatar.com/avatar/%s" % digest
+    digest = hashlib.md5(
+        email.strip().lower().encode(), usedforsecurity=False
+    ).hexdigest()
+    return f"https://gravatar.com/avatar/{digest}"
 
 
 def is_email(text: str) -> bool:
@@ -27,9 +29,10 @@ def is_email(text: str) -> bool:
 
 
 def main() -> None:
+    """Turn the clipboard's email address into its Gravatar URL."""
     clipboard = paste()
     if not is_email(clipboard):
-        die("I need something that looks like an email address:\n%s" % clipboard)
+        die(f"I need something that looks like an email address:\n{clipboard}")
     result = gravatar_url(clipboard)
     copy(result)
     notify(result)

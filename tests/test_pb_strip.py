@@ -1,5 +1,7 @@
-"""Tests for pb-strip: default whitespace-padded-line stripping, and the
-optional regex-argument mode."""
+"""Tests for pb-strip.
+
+Covers default whitespace-padded-line stripping and the optional regex mode.
+"""
 
 from conftest import load_script
 

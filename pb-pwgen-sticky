@@ -13,11 +13,10 @@ import secrets
 import string
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import copy, notify  # noqa: E402
+from pbclip import copy, notify
 
 PWGEN_LENGTH = 20
 ALTERNATE_PASSWORD_COUNT = 10
@@ -33,7 +32,7 @@ CHAR_CLASSES = (LOWER, UPPER, DIGITS, PUNCTUATION)
 ALL_CHARS = "".join(CHAR_CLASSES)
 
 
-def _secure_shuffle(items: list) -> None:
+def _secure_shuffle(items: list[str]) -> None:
     """Shuffle `items` in place using a cryptographically secure RNG."""
     for i in range(len(items) - 1, 0, -1):
         j = secrets.randbelow(i + 1)
@@ -44,7 +43,8 @@ def generate_password(length: int = PWGEN_LENGTH) -> str:
     """Generate a random password containing at least one of each character class."""
     if length < len(CHAR_CLASSES):
         raise ValueError(
-            f"length must be at least {len(CHAR_CLASSES)} to include all character classes"
+            f"length must be at least {len(CHAR_CLASSES)}"
+            " to include all character classes"
         )
     chars = [secrets.choice(char_class) for char_class in CHAR_CLASSES]
     chars.extend(secrets.choice(ALL_CHARS) for _ in range(length - len(chars)))
@@ -52,7 +52,7 @@ def generate_password(length: int = PWGEN_LENGTH) -> str:
     return "".join(chars)
 
 
-def find_wordlist() -> Optional[Path]:
+def find_wordlist() -> Path | None:
     """Find the moby crossword wordlist under ~/Documents/wordlist*.
 
     Globs the directory name (rather than hardcoding it) so this keeps
@@ -65,7 +65,9 @@ def find_wordlist() -> Optional[Path]:
     for base in sorted(documents.glob("wordlist*")):
         if base.is_dir():
             matches = sorted(
-                p for p in base.iterdir() if p.is_file() and "crossword" in p.name.lower()
+                p
+                for p in base.iterdir()
+                if p.is_file() and "crossword" in p.name.lower()
             )
             if matches:
                 return matches[0]
@@ -78,13 +80,12 @@ def clean_word(word: str) -> str:
     """Clean a raw wordlist line for display: downcase, strip noise chars."""
     word = word.lower()
     word = re.sub(r"['!&./0-9]", "", word)
-    word = re.sub(r"[\s\W]", "-", word, flags=re.ASCII)
-    return word
+    return re.sub(r"[\s\W]", "-", word, flags=re.ASCII)
 
 
 def random_words(
-    wordlist: Path, count: int = WORD_COUNT, rng: Optional[random.Random] = None
-) -> List[str]:
+    wordlist: Path, count: int = WORD_COUNT, rng: random.Random | None = None
+) -> list[str]:
     """Return `count` random cleaned words read from `wordlist`."""
     generator = rng if rng is not None else random
     with wordlist.open("r", encoding="utf-8", errors="replace") as fh:
@@ -93,7 +94,7 @@ def random_words(
     return [clean_word(line.strip()) for line in picked]
 
 
-def build_message(alternate_passwords: List[str], words: List[str]) -> str:
+def build_message(alternate_passwords: list[str], words: list[str]) -> str:
     """Build the sticky notification body offering alternatives."""
     lines = ["New password in clipboard.", "", "Other options:"]
     lines.extend(f"    {pw}" for pw in alternate_passwords)
@@ -105,7 +106,9 @@ def build_message(alternate_passwords: List[str], words: List[str]) -> str:
 
 if __name__ == "__main__":
     primary = generate_password(PWGEN_LENGTH)
-    alternates = [generate_password(PWGEN_LENGTH) for _ in range(ALTERNATE_PASSWORD_COUNT)]
+    alternates = [
+        generate_password(PWGEN_LENGTH) for _ in range(ALTERNATE_PASSWORD_COUNT)
+    ]
     wordlist = find_wordlist()
     words = random_words(wordlist, WORD_COUNT) if wordlist is not None else []
     copy(primary)

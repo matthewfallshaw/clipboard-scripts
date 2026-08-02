@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import copy, notify  # noqa: E402
+from pbclip import copy, notify
 
 PWGEN_LENGTH = 20
 
@@ -24,7 +24,7 @@ CHAR_CLASSES = (LOWER, UPPER, DIGITS, PUNCTUATION)
 ALL_CHARS = "".join(CHAR_CLASSES)
 
 
-def _secure_shuffle(items: list) -> None:
+def _secure_shuffle(items: list[str]) -> None:
     """Shuffle `items` in place using a cryptographically secure RNG."""
     for i in range(len(items) - 1, 0, -1):
         j = secrets.randbelow(i + 1)
@@ -35,7 +35,8 @@ def generate_password(length: int = PWGEN_LENGTH) -> str:
     """Generate a random password containing at least one of each character class."""
     if length < len(CHAR_CLASSES):
         raise ValueError(
-            f"length must be at least {len(CHAR_CLASSES)} to include all character classes"
+            f"length must be at least {len(CHAR_CLASSES)}"
+            " to include all character classes"
         )
     chars = [secrets.choice(char_class) for char_class in CHAR_CLASSES]
     chars.extend(secrets.choice(ALL_CHARS) for _ in range(length - len(chars)))

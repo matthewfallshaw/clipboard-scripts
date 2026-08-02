@@ -9,16 +9,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 
-from inflect import humanize, titlecase, undasherize, underscorize  # noqa: E402
+from inflect import humanize, titlecase, undasherize, underscorize
 
 
 class TestHumanize:
     """Cases ported from spec/pb-humanize_spec.rb."""
 
     def test_all_caps_sentence(self) -> None:
-        assert (
-            humanize("LOREM IPSUM DOLOR SIT AMET.") == "Lorem Ipsum Dolor Sit Amet."
-        )
+        assert humanize("LOREM IPSUM DOLOR SIT AMET.") == "Lorem Ipsum Dolor Sit Amet."
 
     def test_all_caps_lowercases_small_words(self) -> None:
         assert (
@@ -65,9 +63,7 @@ class TestTitlecase:
         assert titlecase("the quick brown fox") == "The Quick Brown Fox"
 
     def test_small_words_lowercased_in_the_middle(self) -> None:
-        assert (
-            titlecase("a tale of two cities") == "A Tale of Two Cities"
-        )
+        assert titlecase("a tale of two cities") == "A Tale of Two Cities"
 
     def test_small_word_capitalised_when_first(self) -> None:
         assert titlecase("the hobbit") == "The Hobbit"
