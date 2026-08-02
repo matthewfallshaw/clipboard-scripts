@@ -96,7 +96,14 @@ def follow_redirects(
             return current
 
         if status in REDIRECT_STATUSES and location:
-            current = urljoin(current, location)
+            following = urljoin(current, location)
+            # Check the scheme before adopting it, not just before fetching it:
+            # a file:// target we refuse to open is still a file:// target we'd
+            # otherwise hand back to the clipboard.
+            if not is_url(following):
+                notify(f"Redirects to {following}, which isn't a web link.")
+                return current
+            current = following
             continue
 
         return current
