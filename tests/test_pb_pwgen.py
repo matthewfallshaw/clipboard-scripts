@@ -24,7 +24,7 @@ class TestGeneratePassword:
         assert len(generate_password(4)) == 4
 
     def test_too_short_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="length must be at least"):
             generate_password(3)
 
     def test_contains_lowercase(self) -> None:

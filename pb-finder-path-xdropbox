@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import LIB_DIR, transform  # noqa: E402
+from pbclip import LIB_DIR, transform
 
 FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
 
@@ -18,7 +18,7 @@ FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
 GOOGLE_DRIVE_RE = re.compile(r"~/Library/CloudStorage/(GoogleDrive-[^/]+)/")
 
 
-def _shorten_google_drive(match: "re.Match[str]") -> str:
+def _shorten_google_drive(match: re.Match[str]) -> str:
     """Keep the account only where it disambiguates.
 
     A "Shared drives" path is owned by the org, so the account that reaches it
@@ -26,18 +26,17 @@ def _shorten_google_drive(match: "re.Match[str]") -> str:
     dropping it there would make the path ambiguous.
     """
     account_dir = match.group(1)
-    rest = match.string[match.end():]
+    rest = match.string[match.end() :]
     if rest.startswith("Shared drives"):
         return "GoogleDrive:/"
-    return "%s:/" % account_dir
+    return f"{account_dir}:/"
 
 
 def rewrite_finder_path(text: str) -> str:
     """Shorten a Finder POSIX path: home dir, Dropbox, and Google Drive."""
     text = re.sub(r"/Users/.*?/", "~/", text)
     text = re.sub(r"~/Dropbox( \([^)]+?\))?/", "Dropbox:", text)
-    text = GOOGLE_DRIVE_RE.sub(_shorten_google_drive, text)
-    return text
+    return GOOGLE_DRIVE_RE.sub(_shorten_google_drive, text)
 
 
 if __name__ == "__main__":

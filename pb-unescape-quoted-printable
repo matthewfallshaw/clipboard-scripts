@@ -9,11 +9,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 
 def unescape_quoted_printable(text: str) -> str:
-    """Decode quoted-printable text back to plain text.
+    r"""Decode quoted-printable text back to plain text.
 
     Matches the old Ruby `text.gsub(/\\r\\n/, "\\n").unpack("M").first`: CRLF
     line endings are normalized to LF, then quoted-printable soft breaks and

@@ -41,6 +41,7 @@ class TestScriptWiring:
         import ast
         from pathlib import Path
 
+        assert mod.__file__ is not None
         source = Path(mod.__file__).read_text()
         tree = ast.parse(source)
         calls = [

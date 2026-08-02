@@ -8,37 +8,20 @@ import subprocess
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Optional
+
+if TYPE_CHECKING:
+    # What HTMLParser hands `handle_starttag`. `Optional`, not `X | None`:
+    # a type alias is a runtime expression, and this has to parse under 3.9.
+    _Attrs = list[tuple[str, Optional[str]]]
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import copy, notify, osascript, paste  # noqa: E402
+from pbclip import copy, notify, osascript, paste
 
 # Tags with no content and no closing tag.
 _VOID_TAGS = frozenset(
     {"br", "hr", "img", "input", "meta", "link", "area", "base", "col", "embed"}
-)
-
-# Block-level tags: rendering starts them on a fresh line and separates
-# consecutive blocks with a blank line.
-_BLOCK_TAGS = frozenset(
-    {
-        "p",
-        "div",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "ul",
-        "ol",
-        "li",
-        "blockquote",
-        "pre",
-        "table",
-        "hr",
-    }
 )
 
 _HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
@@ -50,10 +33,10 @@ _ESCAPE_RE = re.compile(r"([\\`*_\[\]#<])")
 class _Node:
     """A minimal DOM node: a tag with attributes and mixed str/_Node children."""
 
-    def __init__(self, tag: str, attrs: Optional[List[tuple]] = None) -> None:
+    def __init__(self, tag: str, attrs: _Attrs | None = None) -> None:
         self.tag: str = tag
-        self.attrs: dict = dict(attrs or [])
-        self.children: List[Union[str, "_Node"]] = []
+        self.attrs: dict[str, str | None] = dict(attrs or [])
+        self.children: list[str | _Node] = []
 
 
 class _TreeBuilder(HTMLParser):
@@ -62,15 +45,15 @@ class _TreeBuilder(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.root = _Node("root")
-        self.stack: List[_Node] = [self.root]
+        self.stack: list[_Node] = [self.root]
 
-    def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:
+    def handle_starttag(self, tag: str, attrs: _Attrs) -> None:
         node = _Node(tag, attrs)
         self.stack[-1].children.append(node)
         if tag not in _VOID_TAGS:
             self.stack.append(node)
 
-    def handle_startendtag(self, tag: str, attrs: List[tuple]) -> None:
+    def handle_startendtag(self, tag: str, attrs: _Attrs) -> None:
         self.stack[-1].children.append(_Node(tag, attrs))
 
     def handle_endtag(self, tag: str) -> None:
@@ -97,41 +80,23 @@ def _escape(text: str) -> str:
     return _ESCAPE_RE.sub(r"\\\1", text)
 
 
-def _render_inline(node: Union[str, _Node]) -> str:
+def _render_inline(node: str | _Node) -> str:
     """Render a node (and its descendants) as inline Markdown text."""
     if isinstance(node, str):
         return _escape(_collapse_ws(node))
 
-    tag = node.tag
     inner = "".join(_render_inline(child) for child in node.children)
-
-    if tag in ("b", "strong"):
-        return "**%s**" % inner if inner.strip() else inner
-    if tag in ("i", "em"):
-        return "_%s_" % inner if inner.strip() else inner
-    if tag in ("s", "strike", "del"):
-        return "~~%s~~" % inner if inner.strip() else inner
-    if tag == "code":
-        raw = _render_text_only(node)
-        return "`%s`" % raw
-    if tag == "a":
-        href = node.attrs.get("href", "")
-        if not href:
-            return inner
-        return "[%s](%s)" % (inner, href)
-    if tag == "img":
-        alt = node.attrs.get("alt", "")
-        src = node.attrs.get("src", "")
-        return "![%s](%s)" % (alt, src)
-    if tag == "br":
-        return "  \n"
+    wrapper = _INLINE_WRAPPERS.get(node.tag)
+    if wrapper is not None:
+        return f"{wrapper}{inner}{wrapper}" if inner.strip() else inner
+    renderer = _INLINE_RENDERERS.get(node.tag)
     # Unknown inline tag: pass its rendered content through unchanged.
-    return inner
+    return renderer(node, inner) if renderer else inner
 
 
 def _render_text_only(node: _Node) -> str:
     """Concatenate descendant text with HTML whitespace collapsed, unescaped."""
-    parts: List[str] = []
+    parts: list[str] = []
     for child in node.children:
         if isinstance(child, str):
             parts.append(_collapse_ws(child))
@@ -142,7 +107,7 @@ def _render_text_only(node: _Node) -> str:
 
 def _render_verbatim(node: _Node) -> str:
     """Concatenate descendant text exactly as written, without collapsing whitespace."""
-    parts: List[str] = []
+    parts: list[str] = []
     for child in node.children:
         if isinstance(child, str):
             parts.append(child)
@@ -153,66 +118,131 @@ def _render_verbatim(node: _Node) -> str:
     return "".join(parts)
 
 
+# Inline tags that just wrap their rendered content in a delimiter.
+_INLINE_WRAPPERS = {
+    "b": "**",
+    "strong": "**",
+    "i": "_",
+    "em": "_",
+    "s": "~~",
+    "strike": "~~",
+    "del": "~~",
+}
+
+# Inline tags that need more than a delimiter, given (node, rendered inner text).
+_INLINE_RENDERERS: dict[str, Callable[[_Node, str], str]] = {
+    "code": lambda node, _inner: f"`{_render_text_only(node)}`",
+    "a": lambda node, inner: (
+        f"[{inner}]({node.attrs['href']})" if node.attrs.get("href") else inner
+    ),
+    "img": lambda node, _inner: (
+        f"![{node.attrs.get('alt', '')}]({node.attrs.get('src', '')})"
+    ),
+    "br": lambda _node, _inner: "  \n",
+}
+
+
 def _render_list(node: _Node, depth: int) -> str:
     ordered = node.tag == "ol"
     indent = "    " * depth
-    lines: List[str] = []
+    lines: list[str] = []
     index = 1
     for child in node.children:
         if isinstance(child, str) or child.tag != "li":
             continue
-        marker = "%d." % index if ordered else "-"
+        marker = f"{index}." if ordered else "-"
         index += 1
         block_children = [
-            c for c in child.children if not isinstance(c, str) and c.tag in ("ul", "ol")
+            c
+            for c in child.children
+            if not isinstance(c, str) and c.tag in ("ul", "ol")
         ]
         inline_children = [
             c for c in child.children if isinstance(c, str) or c.tag not in ("ul", "ol")
         ]
         text = "".join(_render_inline(c) for c in inline_children).strip()
-        lines.append("%s%s %s" % (indent, marker, text))
-        for nested in block_children:
-            lines.append(_render_list(nested, depth + 1).rstrip("\n"))
+        lines.append(f"{indent}{marker} {text}")
+        lines.extend(
+            _render_list(nested, depth + 1).rstrip("\n") for nested in block_children
+        )
     return "\n".join(lines) + "\n"
 
 
+def _row_cells(row: _Node) -> list[str]:
+    """Render one <tr>'s cells to a list of Markdown strings."""
+    return [
+        "".join(_render_inline(c) for c in cell.children).strip()
+        for cell in row.children
+        if not isinstance(cell, str) and cell.tag in ("td", "th")
+    ]
+
+
+def _collect_rows(node: _Node, rows: list[list[str]]) -> None:
+    """Append every <tr> under `node` to `rows`, descending through row groups."""
+    for child in node.children:
+        if isinstance(child, str):
+            continue
+        if child.tag == "tr":
+            rows.append(_row_cells(child))
+        elif child.tag in ("thead", "tbody", "tfoot"):
+            _collect_rows(child, rows)
+
+
 def _render_table(node: _Node) -> str:
-    rows: List[List[str]] = []
-
-    def _cells(row: _Node) -> List[str]:
-        cells = []
-        for cell in row.children:
-            if isinstance(cell, str) or cell.tag not in ("td", "th"):
-                continue
-            cells.append("".join(_render_inline(c) for c in cell.children).strip())
-        return cells
-
-    def _walk(n: _Node) -> None:
-        for child in n.children:
-            if isinstance(child, str):
-                continue
-            if child.tag == "tr":
-                rows.append(_cells(child))
-            elif child.tag in ("thead", "tbody", "tfoot"):
-                _walk(child)
-
-    _walk(node)
+    """Render a <table> as a Markdown pipe table, padded to a uniform width."""
+    rows: list[list[str]] = []
+    _collect_rows(node, rows)
     if not rows:
         return ""
 
     width = max(len(r) for r in rows)
     rows = [r + [""] * (width - len(r)) for r in rows]
 
-    lines = ["| " + " | ".join(rows[0]) + " |", "| " + " | ".join(["---"] * width) + " |"]
-    for row in rows[1:]:
-        lines.append("| " + " | ".join(row) + " |")
+    lines = [
+        "| " + " | ".join(rows[0]) + " |",
+        "| " + " | ".join(["---"] * width) + " |",
+    ]
+    lines.extend("| " + " | ".join(row) + " |" for row in rows[1:])
     return "\n".join(lines) + "\n"
 
 
-def _render_block(node: _Node) -> List[str]:
-    """Render a node's block-level children to a list of Markdown blocks."""
-    blocks: List[str] = []
-    buffer: List[Union[str, _Node]] = []
+def _render_heading(node: _Node) -> str:
+    """Render an <h1>-<h6> as an ATX heading."""
+    text = "".join(_render_inline(c) for c in node.children).strip()
+    return f"{'#' * int(node.tag[1])} {text}"
+
+
+def _render_paragraph(node: _Node) -> list[str]:
+    """Render a <p>/<div>: recurse if it wraps blocks, else emit one block."""
+    if any(not isinstance(c, str) and c.tag in _BLOCK_RENDERERS for c in node.children):
+        return _render_block(node)
+    text = "".join(_render_inline(c) for c in node.children).strip()
+    return [text] if text else []
+
+
+def _render_blockquote(node: _Node) -> str:
+    """Render a <blockquote>, prefixing every line of its content with "> "."""
+    quoted = "\n\n".join(_render_block(node))
+    return "\n".join("> " + line if line else ">" for line in quoted.split("\n"))
+
+
+def _render_pre(node: _Node) -> str:
+    """Render a <pre> as a fenced code block, unwrapping a <code> child."""
+    code = next(
+        (c for c in node.children if not isinstance(c, str) and c.tag == "code"), None
+    )
+    raw = _render_verbatim(code if code is not None else node).strip("\n")
+    return f"```\n{raw}\n```"
+
+
+def _render_block(node: _Node) -> list[str]:
+    """Render a node's block-level children to a list of Markdown blocks.
+
+    Inline content between block elements accumulates in `buffer` and is
+    flushed as its own block whenever a block element interrupts it.
+    """
+    blocks: list[str] = []
+    buffer: list[str | _Node] = []
 
     def flush_inline() -> None:
         if not buffer:
@@ -226,55 +256,31 @@ def _render_block(node: _Node) -> List[str]:
         if isinstance(child, str):
             if child.strip():
                 buffer.append(child)
-            continue
-
-        tag = child.tag
-        if tag not in _BLOCK_TAGS:
+        elif child.tag not in _BLOCK_RENDERERS:
             buffer.append(child)
-            continue
-
-        flush_inline()
-
-        if tag in _HEADING_TAGS:
-            level = int(tag[1])
-            text = "".join(_render_inline(c) for c in child.children).strip()
-            blocks.append("%s %s" % ("#" * level, text))
-        elif tag in ("p", "div"):
-            has_block_child = any(
-                not isinstance(c, str) and c.tag in _BLOCK_TAGS for c in child.children
-            )
-            if has_block_child:
-                blocks.extend(_render_block(child))
-            else:
-                text = "".join(_render_inline(c) for c in child.children).strip()
-                if text:
-                    blocks.append(text)
-        elif tag in ("ul", "ol"):
-            blocks.append(_render_list(child, 0).rstrip("\n"))
-        elif tag == "blockquote":
-            inner_blocks = _render_block(child)
-            quoted = "\n\n".join(inner_blocks)
-            blocks.append(
-                "\n".join("> " + line if line else ">" for line in quoted.split("\n"))
-            )
-        elif tag == "pre":
-            code_node = None
-            for c in child.children:
-                if not isinstance(c, str) and c.tag == "code":
-                    code_node = c
-                    break
-            raw = _render_verbatim(code_node if code_node is not None else child).strip("\n")
-            blocks.append("```\n%s\n```" % raw)
-        elif tag == "table":
-            blocks.append(_render_table(child).rstrip("\n"))
-        elif tag == "hr":
-            blocks.append("---")
-        elif tag == "li":
-            # Stray <li> outside a list container - treat like a paragraph.
-            blocks.extend(_render_block(child))
+        else:
+            flush_inline()
+            blocks.extend(_BLOCK_RENDERERS[child.tag](child))
 
     flush_inline()
     return blocks
+
+
+# Block-level tags, and how each renders. Membership here is what makes a tag
+# block-level: rendering starts it on a fresh line, separated by a blank line.
+_BLOCK_RENDERERS: dict[str, Callable[[_Node], list[str]]] = {
+    "p": _render_paragraph,
+    "div": _render_paragraph,
+    "ul": lambda node: [_render_list(node, 0).rstrip("\n")],
+    "ol": lambda node: [_render_list(node, 0).rstrip("\n")],
+    "blockquote": lambda node: [_render_blockquote(node)],
+    "pre": lambda node: [_render_pre(node)],
+    "table": lambda node: [_render_table(node).rstrip("\n")],
+    "hr": lambda _node: ["---"],
+    # A stray <li> outside a list container reads like a paragraph.
+    "li": _render_block,
+    **dict.fromkeys(_HEADING_TAGS, lambda node: [_render_heading(node)]),
+}
 
 
 def html_to_markdown(source: str) -> str:
@@ -286,7 +292,7 @@ def html_to_markdown(source: str) -> str:
     return "\n\n".join(b for b in blocks if b).strip() + "\n"
 
 
-def clipboard_html() -> Optional[str]:
+def clipboard_html() -> str | None:
     """Return the pasteboard's HTML flavour, or None if it doesn't have one."""
     info = osascript("clipboard info")
     if "HTML" not in info:

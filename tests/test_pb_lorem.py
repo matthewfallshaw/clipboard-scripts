@@ -32,9 +32,9 @@ class TestLoremIpsum:
         assert paragraphs[len(LOREM_PARAGRAPHS)] == LOREM_PARAGRAPHS[0]
 
     def test_zero_paragraphs_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must be at least 1"):
             lorem_ipsum(0)
 
     def test_negative_paragraphs_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must be at least 1"):
             lorem_ipsum(-1)

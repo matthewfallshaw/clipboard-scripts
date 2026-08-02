@@ -6,16 +6,17 @@ from __future__ import annotations
 import random
 import sys
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 DEFAULT_MAXIMUM = 999999
 
 
-def random_number(maximum: int = DEFAULT_MAXIMUM, rng: Optional[random.Random] = None) -> int:
+def random_number(
+    maximum: int = DEFAULT_MAXIMUM, rng: random.Random | None = None
+) -> int:
     """Return a random integer in [1, maximum], inclusive."""
     generator = rng if rng is not None else random
     return generator.randint(1, maximum)

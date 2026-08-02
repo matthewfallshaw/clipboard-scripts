@@ -1,6 +1,5 @@
 """Tests for pb-wc word counting."""
 
-import pytest
 from conftest import load_script
 
 mod = load_script("pb-wc")

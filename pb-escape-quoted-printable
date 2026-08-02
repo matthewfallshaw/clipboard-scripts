@@ -9,11 +9,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 
 def escape_quoted_printable(text: str) -> str:
-    """Quoted-printable-encode text, with CRLF line endings.
+    r"""Quoted-printable-encode text, with CRLF line endings.
 
     Matches the old Ruby `[text].pack("M").gsub(/\\n/, "\\r\\n")`: soft line
     breaks every 76 columns (RFC 2045), CRLF terminators. `quopri` only emits a

@@ -13,9 +13,9 @@ class TestHeadings:
 
     def test_h1_through_h6(self) -> None:
         for level in range(1, 7):
-            tag = "h%d" % level
-            result = html_to_markdown("<%s>X</%s>" % (tag, tag))
-            assert result == "%s X\n" % ("#" * level)
+            tag = f"h{level}"
+            result = html_to_markdown(f"<{tag}>X</{tag}>")
+            assert result == f"{'#' * level} X\n"
 
 
 class TestInlineFormatting:
@@ -84,15 +84,11 @@ class TestLists:
     def test_nested_list_indented_for_ordered_parent(self) -> None:
         # A 2-space indent isn't enough for CommonMark to nest content under
         # an "1. " marker (3 chars wide); it must be indented at least that far.
-        result = html_to_markdown(
-            "<ol><li>Top<ul><li>Sub</li></ul></li></ol>"
-        )
+        result = html_to_markdown("<ol><li>Top<ul><li>Sub</li></ul></li></ol>")
         assert result == "1. Top\n    - Sub\n"
 
     def test_deeply_nested_mixed_list(self) -> None:
-        result = html_to_markdown(
-            "<ul><li>A<ol><li>A1</li></ol></li><li>B</li></ul>"
-        )
+        result = html_to_markdown("<ul><li>A<ol><li>A1</li></ol></li><li>B</li></ul>")
         assert result == "- A\n    1. A1\n- B\n"
 
 
@@ -109,8 +105,7 @@ class TestCodeBlocks:
 class TestTables:
     def test_simple_table(self) -> None:
         html = (
-            "<table><tr><th>A</th><th>B</th></tr>"
-            "<tr><td>1</td><td>2</td></tr></table>"
+            "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>"
         )
         result = html_to_markdown(html)
         assert result == "| A | B |\n| --- | --- |\n| 1 | 2 |\n"

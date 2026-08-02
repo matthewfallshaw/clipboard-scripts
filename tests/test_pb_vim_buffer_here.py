@@ -6,6 +6,7 @@ from conftest import load_script
 
 mod = load_script("pb-vim-buffer-here")
 choose_target = mod.choose_target
+SCRATCH_PATH = mod.SCRATCH_PATH
 NEW_FILE_PROMPT = mod.NEW_FILE_PROMPT
 OPEN_FILE_PROMPT = mod.OPEN_FILE_PROMPT
 
@@ -18,16 +19,24 @@ def never_text(_path: str) -> bool:
     return False
 
 
+class TestScratchPath:
+    def test_lives_under_home_not_a_shared_temp_dir(self) -> None:
+        assert Path(SCRATCH_PATH).is_relative_to(Path.home())
+
+    def test_is_named_for_this_script(self) -> None:
+        assert Path(SCRATCH_PATH).name == "vim-scratch.txt"
+
+
 class TestNothingSelected:
-    def test_missing_path_falls_back_to_tempfile(self) -> None:
+    def test_missing_path_falls_back_to_the_scratch_file(self) -> None:
         path, dialog_text = choose_target("", always_text)
-        assert path == "/tmp/tempfile.txt"
+        assert path == SCRATCH_PATH
         assert dialog_text == NEW_FILE_PROMPT
 
-    def test_vanished_path_falls_back_to_tempfile(self, tmp_path: Path) -> None:
+    def test_vanished_path_falls_back_to_the_scratch_file(self, tmp_path: Path) -> None:
         missing = tmp_path / "gone.txt"
         path, dialog_text = choose_target(str(missing), always_text)
-        assert path == "/tmp/tempfile.txt"
+        assert path == SCRATCH_PATH
         assert dialog_text == NEW_FILE_PROMPT
 
 

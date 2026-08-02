@@ -16,11 +16,10 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import copy, find_binary, notify, paste  # noqa: E402
+from pbclip import copy, find_binary, notify, paste
 
 CLAUDE_MODEL = "haiku"
 
@@ -47,8 +46,9 @@ FENCE_RE = re.compile(r"\A```(?:\w+)?\n(.*)\n```\Z", re.DOTALL)
 
 
 def debug(message: str) -> None:
+    """Trace to stderr when PB_DEBUG is set; the model round-trip is opaque."""
     if os.environ.get("PB_DEBUG"):
-        print("[pb-sentence-case] %s" % message, file=sys.stderr)
+        print(f"[pb-sentence-case] {message}", file=sys.stderr)  # noqa: T201
 
 
 def strip_code_fence(text: str) -> str:
@@ -62,7 +62,7 @@ def simple_sentence_case(text: str) -> str:
     return re.sub(r"^.|(?<=\. ).", lambda m: m.group().upper(), text.lower())
 
 
-def claude_sentence_case(text: str, claude: str) -> Optional[str]:
+def claude_sentence_case(text: str, claude: str) -> str | None:
     """Sentence-case via Claude, or None if it didn't work out."""
     try:
         result = subprocess.run(
@@ -80,19 +80,20 @@ def claude_sentence_case(text: str, claude: str) -> Optional[str]:
             capture_output=True,
             text=True,
             timeout=CLAUDE_TIMEOUT_SECONDS,
+            check=False,
         )
     except subprocess.TimeoutExpired:
-        debug("timed out after %ss" % CLAUDE_TIMEOUT_SECONDS)
+        debug(f"timed out after {CLAUDE_TIMEOUT_SECONDS}s")
         return None
 
     if result.returncode != 0:
-        debug("exit %s: %s" % (result.returncode, result.stderr[:200]))
+        debug(f"exit {result.returncode}: {result.stderr[:200]}")
         return None
 
     try:
         response = json.loads(result.stdout)
     except json.JSONDecodeError as error:
-        debug("undecodable response: %s" % error)
+        debug(f"undecodable response: {error}")
         return None
 
     cased = strip_code_fence(response.get("structured_output", {}).get("text", ""))
@@ -117,6 +118,7 @@ def sentence_case(text: str) -> str:
 
 
 def main() -> None:
+    """Sentence-case the clipboard."""
     content = paste()
     if not content.strip():
         notify("Nothing in the clipboard to sentence-case.")

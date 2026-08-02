@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import LIB_DIR, notify, paste  # noqa: E402
+from pbclip import LIB_DIR, notify, paste
 
 FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
 

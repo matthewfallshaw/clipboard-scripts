@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import die, paste  # noqa: E402
+from pbclip import die, paste
 
 
 def dict_url(term: str) -> str:

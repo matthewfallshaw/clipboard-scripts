@@ -11,8 +11,15 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    # What the `run_notify` fixture hands a test: call it with argv, get argv back.
+    RunNotify = Callable[..., "list[str]"]
 
 NOTIFY = Path(__file__).resolve().parent.parent / "lib" / "notify"
 
@@ -22,7 +29,7 @@ printf '%s\\n' "$@" > "$ARGV_DUMP"
 
 
 @pytest.fixture
-def run_notify(tmp_path: Path):
+def run_notify(tmp_path: Path) -> RunNotify:
     """Run `lib/notify` against a stub backend; return the argv it received."""
     home = tmp_path / "home"
     backend = home / "code" / "hammerspoon-config" / "bin" / "notify"
@@ -31,12 +38,13 @@ def run_notify(tmp_path: Path):
     backend.chmod(0o755)
     dump = tmp_path / "argv"
 
-    def run(*args: str) -> "list[str]":
+    def run(*args: str) -> list[str]:
         result = subprocess.run(
             [str(NOTIFY), *args],
             env={"HOME": str(home), "ARGV_DUMP": str(dump), "PATH": "/usr/bin:/bin"},
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0, result.stderr
         return dump.read_text().split("\n")[:-1]
@@ -45,52 +53,63 @@ def run_notify(tmp_path: Path):
 
 
 class TestBackendDispatch:
-    def test_from_supplies_both_title_and_id(self, run_notify) -> None:
+    def test_from_supplies_both_title_and_id(self, run_notify: RunNotify) -> None:
         assert run_notify("--from", "pb-upcase", "--", "SHOUTING") == [
-            "--title", "pb-upcase",
-            "--id", "pb-upcase",
-            "--", "SHOUTING",
+            "--title",
+            "pb-upcase",
+            "--id",
+            "pb-upcase",
+            "--",
+            "SHOUTING",
         ]
 
-    def test_explicit_title_follows_the_default_so_it_wins(self, run_notify) -> None:
+    def test_explicit_title_follows_the_default_so_it_wins(
+        self, run_notify: RunNotify
+    ) -> None:
         # bin/notify keeps the last occurrence of a flag, so ordering is the
         # whole mechanism by which an explicit value overrides --from's default.
         argv = run_notify("--from", "pb-upcase", "--title", "Shout", "--", "hi")
         assert argv.index("Shout") > argv.index("pb-upcase")
 
-    def test_explicit_id_follows_the_default_so_it_wins(self, run_notify) -> None:
+    def test_explicit_id_follows_the_default_so_it_wins(
+        self, run_notify: RunNotify
+    ) -> None:
         argv = run_notify("--from", "pb-upcase", "--id", "shout-1", "--", "hi")
         assert argv.index("shout-1") > argv.index("pb-upcase")
 
-    def test_sticky_and_duration_pass_through(self, run_notify) -> None:
+    def test_sticky_and_duration_pass_through(self, run_notify: RunNotify) -> None:
         argv = run_notify("--from", "pb-x", "--sticky", "--duration", "30", "--", "hi")
         assert "--sticky" in argv
         assert argv[argv.index("--duration") + 1] == "30"
 
-    def test_flags_are_absent_unless_asked_for(self, run_notify) -> None:
+    def test_flags_are_absent_unless_asked_for(self, run_notify: RunNotify) -> None:
         argv = run_notify("--from", "pb-x", "--", "hi")
         assert "--sticky" not in argv
         assert "--duration" not in argv
 
-    def test_message_is_last_and_introduced_by_a_separator(self, run_notify) -> None:
+    def test_message_is_last_and_introduced_by_a_separator(
+        self, run_notify: RunNotify
+    ) -> None:
         assert run_notify("--from", "pb-x", "--", "hi")[-2:] == ["--", "hi"]
 
-    def test_a_message_that_looks_like_a_flag_survives(self, run_notify) -> None:
+    def test_a_message_that_looks_like_a_flag_survives(
+        self, run_notify: RunNotify
+    ) -> None:
         # Clipboard content is arbitrary; `--` is what stops it being parsed.
         assert run_notify("--from", "pb-x", "--", "--sticky")[-2:] == ["--", "--sticky"]
 
-    def test_message_words_are_joined(self, run_notify) -> None:
+    def test_message_words_are_joined(self, run_notify: RunNotify) -> None:
         assert run_notify("--from", "pb-x", "--", "one", "two")[-1] == "one two"
 
-    def test_an_empty_message_is_still_delivered(self, run_notify) -> None:
+    def test_an_empty_message_is_still_delivered(self, run_notify: RunNotify) -> None:
         # pb-strip-nonnumbers and friends notify an empty result rather than
         # staying silent; bin/notify rejects a *missing* message with exit 2.
         assert run_notify("--from", "pb-x", "--", "")[-2:] == ["--", ""]
 
-    def test_a_bare_message_needs_no_separator(self, run_notify) -> None:
+    def test_a_bare_message_needs_no_separator(self, run_notify: RunNotify) -> None:
         assert run_notify("hello")[-2:] == ["--", "hello"]
 
-    def test_from_defaults_to_the_scripts_own_name(self, run_notify) -> None:
+    def test_from_defaults_to_the_scripts_own_name(self, run_notify: RunNotify) -> None:
         # Useless as a label, which is why every caller passes --from; the
         # point is only that omitting it can't produce an empty title or id.
         assert run_notify("hello")[:4] == ["--title", "notify", "--id", "notify"]
@@ -105,18 +124,24 @@ class TestPrivacy:
     ask for persistence on a caller's behalf.
     """
 
-    def test_persistence_is_never_asked_for_by_default(self, run_notify) -> None:
+    def test_persistence_is_never_asked_for_by_default(
+        self, run_notify: RunNotify
+    ) -> None:
         assert "--persist" not in run_notify("--from", "pb-x", "--", "hi")
 
-    def test_persistence_is_never_asked_for_when_sticky(self, run_notify) -> None:
+    def test_persistence_is_never_asked_for_when_sticky(
+        self, run_notify: RunNotify
+    ) -> None:
         # Sticky cards never expire, so they are the ones that would sit on
         # disk longest if this leaked.
         assert "--persist" not in run_notify("--from", "pb-x", "--sticky", "--", "hi")
 
-    def test_persist_passes_through(self, run_notify) -> None:
+    def test_persist_passes_through(self, run_notify: RunNotify) -> None:
         assert "--persist" in run_notify("--from", "pb-x", "--persist", "--", "hi")
 
-    def test_the_retired_private_flag_is_never_sent(self, run_notify) -> None:
+    def test_the_retired_private_flag_is_never_sent(
+        self, run_notify: RunNotify
+    ) -> None:
         # bin/notify dropped --private when private became its default, and
         # rejects unknown options with exit 2 — so reintroducing it here
         # would not be a harmless no-op, it would cost the notification.
@@ -126,7 +151,7 @@ class TestPrivacy:
 REPO_DIR = Path(__file__).resolve().parent.parent
 
 
-def bash_scripts() -> "list[Path]":
+def bash_scripts() -> list[Path]:
     return [
         p
         for p in sorted(REPO_DIR.glob("pb-*"))

@@ -3,16 +3,14 @@
 
 from __future__ import annotations
 
-import os
 import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import LIB_DIR, notify, osascript, paste, require_binary  # noqa: E402
+from pbclip import LIB_DIR, notify, osascript, paste, require_binary
 
 FINDER_SCRIPT: Path = LIB_DIR / "copy-finder-path.scpt"
 
@@ -26,16 +24,17 @@ end run
 """
 
 
-def target_directory(finder_path: str) -> Optional[str]:
+def target_directory(finder_path: str) -> str | None:
     """Pick the directory to vidir: the selected path, or its parent if it's a file.
 
     Returns None if `finder_path` doesn't exist (e.g. nothing was selected).
     """
-    if not finder_path or not os.path.exists(finder_path):
+    path = Path(finder_path)
+    if not finder_path or not path.exists():
         return None
-    if os.path.isdir(finder_path):
+    if path.is_dir():
         return finder_path
-    return os.path.dirname(finder_path)
+    return str(path.parent)
 
 
 if __name__ == "__main__":
@@ -44,9 +43,11 @@ if __name__ == "__main__":
     tokens = paste().split()
     directory = target_directory(tokens[0] if tokens else "")
     if directory is None:
-        notify("You'll need to select a directory in Finder, then I can vidir it for you.")
+        notify(
+            "You'll need to select a directory in Finder, then I can vidir it for you."
+        )
         sys.exit(0)
 
     vidir = require_binary("vidir")
-    command = "%s %s" % (shlex.quote(vidir), shlex.quote(directory))
+    command = f"{shlex.quote(vidir)} {shlex.quote(directory)}"
     osascript(TERMINAL_SCRIPT, [command])

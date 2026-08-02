@@ -43,9 +43,9 @@ class TestIsEmail:
 
 class TestGravatarUrl:
     def test_known_hash(self) -> None:
-        expected = hashlib.md5(b"test@example.com").hexdigest()
+        expected = hashlib.md5(b"test@example.com", usedforsecurity=False).hexdigest()
         assert gravatar_url("test@example.com") == (
-            "https://gravatar.com/avatar/%s" % expected
+            f"https://gravatar.com/avatar/{expected}"
         )
 
     def test_strips_whitespace(self) -> None:

@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import die, paste, transform  # noqa: E402
+from pbclip import die, paste, transform
 
 # https://www.google.com/url?q=http://lesswrong.com/lw/jg/planning_fallacy/&sa=U&ei=G6ulUf-LComYqAHbuIDQCQ&ved=0CAcQFjAA&client=internal-uds-cse&usg=AFQjCNFnb1OtVL1uuIiuvTnjaqOaqsraxQ
 # https://www.google.com.au/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CDAQFjAA&url=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FPlanning_fallacy&ei=_qulUbTqOMmCiQfbx4CYCw&usg=AFQjCNGFtR1K-hSLR-8aeW0EowOGhDcuSQ&sig2=NXIWMQfEp9nMCDLgSwLuTw&bvm=bv.47008514,d.aGc
@@ -22,7 +22,7 @@ GOOGLE_LINK_RE = re.compile(
 
 
 def is_google_link(text: str) -> bool:
-    """True if `text` looks like a Google search redirect URL."""
+    """Report whether `text` looks like a Google search redirect URL."""
     return GOOGLE_LINK_RE.search(text) is not None
 
 

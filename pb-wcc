@@ -8,12 +8,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import notify, paste  # noqa: E402
-from textstats import count_chars, count_words  # noqa: E402
+from pbclip import notify, paste
+from textstats import count_chars, count_words
 
 
 def char_count_message(text: str) -> str:
-    """Build the "{chars} characters\\n({words} words)" notification message."""
+    r"""Build the "{chars} characters\n({words} words)" notification message."""
     return f"{count_chars(text)} characters\n({count_words(text)} words)"
 
 

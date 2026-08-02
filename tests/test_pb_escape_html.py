@@ -30,7 +30,10 @@ class TestEscapeHtml:
         assert escape_html("café") == "café"
 
     def test_multiline(self) -> None:
-        assert escape_html("<b>x</b>\n<i>y</i>") == "&lt;b&gt;x&lt;/b&gt;\n&lt;i&gt;y&lt;/i&gt;"
+        assert (
+            escape_html("<b>x</b>\n<i>y</i>")
+            == "&lt;b&gt;x&lt;/b&gt;\n&lt;i&gt;y&lt;/i&gt;"
+        )
 
     def test_already_escaped_input_is_double_escaped(self) -> None:
         # Escaping is not idempotent: an existing entity's `&` gets re-escaped.
@@ -46,5 +49,5 @@ class TestRoundTrip:
             from conftest import load_script as _load
 
             unescape_html = _load("pb-unescape-html").unescape_html
-        original = "<div class=\"a & b\">it's <b>bold</b></div>"
+        original = '<div class="a & b">it\'s <b>bold</b></div>'
         assert unescape_html(escape_html(original)) == original

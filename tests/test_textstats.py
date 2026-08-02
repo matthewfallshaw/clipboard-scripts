@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from textstats import count_chars, count_words  # noqa: E402
+from textstats import count_chars, count_words
 
 
 class TestCountWords:
