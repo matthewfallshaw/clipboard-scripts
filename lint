@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Run ruff and pyright over every Python file here, extensionless ones included.
+
+Both tools discover files by extension, so on their own neither sees the `pb-*`
+scripts. This hands them the list, found the way everything else here finds it:
+a `python` shebang. Rules and settings live in `pyproject.toml`, so an editor's
+ruff and pyright report exactly what this does.
+
+    ./lint          # report
+    ./lint --fix    # apply ruff's safe fixes and the formatter, then report
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_DIR = Path(__file__).resolve().parent
+
+
+def python_files() -> list[Path]:
+    """Every Python file in the repo: `.py` modules plus shebanged scripts."""
+    found = [p for p in sorted(REPO_DIR.glob("*")) if has_python_shebang(p)]
+    found.extend(sorted(REPO_DIR.glob("lib/*.py")))
+    found.extend(sorted(REPO_DIR.glob("tests/*.py")))
+    return found
+
+
+def has_python_shebang(path: Path) -> bool:
+    """Report whether `path` is a file whose first line names python."""
+    if not path.is_file():
+        return False
+    with path.open("rb") as handle:
+        return b"python" in handle.readline()
+
+
+def main(argv: list[str]) -> int:
+    """Run each tool over every file, and return the worst exit status."""
+    fix = "--fix" in argv
+    targets = [str(p) for p in python_files()]
+    commands = (
+        [["ruff", "check", "--fix"], ["ruff", "format"]]
+        if fix
+        else [["ruff", "check"], ["ruff", "format", "--check"]]
+    )
+    commands.append(["pyright"])
+    worst = 0
+    for command in commands:
+        print(f"\n$ {' '.join(command)}", flush=True)
+        result = subprocess.run(
+            ["uv", "run", *command, *targets], cwd=REPO_DIR, check=False
+        )
+        worst = max(worst, result.returncode)
+    return worst
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

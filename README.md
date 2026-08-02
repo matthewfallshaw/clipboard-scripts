@@ -41,7 +41,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-from pbclip import transform  # noqa: E402
+from pbclip import transform
 
 
 def dasherize(text: str) -> str:
@@ -63,12 +63,16 @@ Two constraints worth knowing before you write one:
 
 Genuine one-liners can stay in bash — see `pb-downcase`.
 
-## Tests
+## Tests and linting
 
 ```bash
 uv run pytest           # everything except the live tests
 uv run pytest -m live   # tests that hit the network or the Claude API
+./lint                  # ruff + ruff format + pyright (strict) over every Python file
+./lint --fix            # apply ruff's safe fixes and the formatter first
 ```
+
+`./lint` exists because ruff and pyright both find files by extension, and the `pb-*` scripts have none. It finds them by shebang and hands both tools the list; the rules themselves live in `pyproject.toml`, so an editor's ruff and pyright report the same thing.
 
 ## License
 

@@ -13,6 +13,7 @@ A collection of scripts that transform the macOS pasteboard, triggered from laun
 - **`lib/notify`**: the single notification implementation. Every script goes through it, so swapping the backend is a one-file change.
 - **`lib/inflect.py`**, **`lib/textstats.py`**: word/case transforms and word counting, shared between related scripts.
 - **`install`**: symlinks `pb-*` into `bin/`, rebuilding it from scratch.
+- **`lint`**: finds every Python file by shebang and runs ruff and pyright over it.
 - **`tests/`**: pytest. `tests/conftest.py` provides `load_script("pb-foo")` to import an extensionless script as a module.
 
 ## Notifications
@@ -34,13 +35,17 @@ Routes to hammerspoon-config's `bin/notify` (non-modal, persistent-until-dismiss
 ./install --dry-run     # report what would change
 uv run pytest           # all tests except live ones
 uv run pytest -m live   # tests that hit the network or the Claude API
+./lint                  # ruff check + ruff format --check + pyright (strict)
+./lint --fix            # apply ruff's safe fixes and the formatter, then report
 ```
 
 ## Constraints
 
 **Standard library only at runtime.** No pip dependencies in the scripts. `uv` is for tests.
 
-**Python 3.9 syntax.** Launchers run scripts with a bare `PATH`, so `#!/usr/bin/env python3` resolves to macOS's system Python (3.9), not to `uv`'s or nix's. Start every script with `from __future__ import annotations`; no `match`, no runtime `X | Y` unions. `tests/test_shebang_compat.py` enforces this and the executable bit.
+**Python 3.9 syntax.** Launchers run scripts with a bare `PATH`, so `#!/usr/bin/env python3` resolves to macOS's system Python (3.9), not to `uv`'s or nix's. Start every script with `from __future__ import annotations`; no `match`, and no `X | Y` union anywhere it's *evaluated* — a type alias or a `cast()` argument is evaluated, an annotation under that future import is not. `tests/test_shebang_compat.py` compiles every non-test file under `/usr/bin/python3` and checks the executable bit; `pyright`'s `pythonVersion = "3.9"` catches the rest.
+
+**Ruff selects `ALL`.** Every ignore in `pyproject.toml` carries the argument for it. Reach for a fix before an ignore, and when a rule really has nothing to say here, add it there with the reason rather than scattering `noqa`. A `noqa` is for a single site that's genuinely the exception, and it gets a comment.
 
 **Resolve `__file__` before finding `lib/`.** `bin/pb-foo` is a symlink to the repo root, so scripts use `Path(__file__).resolve().parent / "lib"` (Python) or `dirname "$(readlink -f "$0")"` (bash). Anything else breaks when run through `bin/`.
 
