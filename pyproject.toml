@@ -11,8 +11,10 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.411",
     "pytest>=9.0.3",
     "pytest-watcher>=0.6.3",
+    "ruff>=0.16.1",
 ]
 
 [tool.pytest.ini_options]
@@ -21,3 +23,48 @@ addopts = "-m 'not live'"
 markers = [
     "live: hits a real external service (network, Claude API). Run with `-m live`.",
 ]
+
+[tool.ruff]
+# Not `requires-python` above: that describes the dev environment. The scripts
+# run under macOS's 3.9, so no rule may propose newer syntax.
+target-version = "py39"
+src = ["lib"]
+
+[tool.ruff.lint]
+# Everything, minus what's argued away below. A rule that fires and has nothing
+# to say about this code gets an entry here with the reason; a rule that has
+# something to say gets the code fixed instead.
+select = ["ALL"]
+ignore = [
+    "COM812", "ISC001",       # the formatter owns comma and string layout
+    "D203", "D213",           # contradict D211/D212, which we keep
+    "CPY001",                 # no copyright headers here
+    "S603",                   # every subprocess call is a literal argv to an absolute path
+    "INP001",                 # tests/ and the pb-* scripts are deliberately not packages
+    "EM101", "EM102", "TRY003",  # these scripts report failure through die(), not exception text
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",                   # asserting is what a test does
+    "D101", "D102", "D103",   # the test's name is its documentation
+    "D105", "D107",           # nor do the dunders on a four-line fake
+    "PLR2004",                # a literal in an assertion is the expected value
+    "PLC0415",                # a late import is how a test picks up its monkeypatching
+    "PYI034",                 # `Self` needs 3.11; nothing subclasses a fake anyway
+    "S311",                   # `random` in a test is a fixture, not a secret
+    "S108",                   # a "/tmp/..." literal here is a fixture string, not a file
+]
+"install" = ["T201"]          # it's a CLI; printing is its output
+"lint" = [
+    "T201",                   # ditto
+    "S607",                   # `uv` off PATH: a dev tool, not a launcher-invoked script
+]
+
+[tool.pyright]
+include = ["."]
+extraPaths = ["lib"]
+typeCheckingMode = "strict"
+# Matches the ruff target above, so the type checker rejects what 3.9 can't run.
+pythonVersion = "3.9"
+pythonPlatform = "Darwin"
